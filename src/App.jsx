@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { 
   BookOpen, 
   Activity, 
@@ -10,8 +10,6 @@ import {
   Type,
   ArrowLeft,
   Maximize2,
-  Sparkles,
-  Bot,
   Music,
   Zap,
   AlignJustify,
@@ -27,9 +25,10 @@ import {
   RefreshCcw,
   MessageSquare,
   Gauge,
-  FileText,
+  UserX,
   Printer,
-  UserX
+  Globe,
+  Youtube
 } from 'lucide-react';
 
 // --- CONSTANTES Y DICCIONARIOS ---
@@ -86,34 +85,6 @@ const SENSORY_DICT = {
 
 const SUFIJOS_ADJETIVOS = ["oso", "osa", "ble", "al", "ante", "ente", "ivo", "iva", "ado", "ada", "ido", "ida"];
 
-// --- CONFIGURACIÓN GEMINI API ---
-const apiKey = ""; 
-
-async function getGeminiFeedback(text) {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Actúa como un editor literario experto. Analiza brevemente este texto. 1. Tono general. 2. Dos sugerencias de mejora (ritmo, léxico). 3. Un punto fuerte. Texto: "${text.substring(0, 1000)}..."` 
-            }]
-          }]
-        })
-      }
-    );
-    if (!response.ok) throw new Error('Error IA');
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error al generar.";
-  } catch (error) {
-    console.error("Error IA:", error);
-    return "Error de conexión con la IA.";
-  }
-}
-
 // --- MOTOR DE PROSODIA ---
 const isVowel = (c) => /[aeiouáéíóúü]/i.test(c);
 const isStrong = (c) => /[aeoáéó]/i.test(c); 
@@ -156,12 +127,9 @@ export default function StyleOptimizer() {
   const [text, setText] = useState("");
   const [analysis, setAnalysis] = useState(null);
   const [viewMode, setViewMode] = useState('input');
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState(null);
 
   const handleAnalyze = () => {
     if (!text.trim()) return;
-    setAiFeedback(null);
 
     const wordsRaw = text.split(/\s+/);
     const pureSentences = text.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s));
@@ -180,14 +148,27 @@ export default function StyleOptimizer() {
     let totalCommas = 0;
     let totalSyllables = 0;
 
-    // CÁLCULO DE DIÁLOGO POR PÁRRAFOS (CORREGIDO)
+    // CÁLCULO DE DIÁLOGO POR PÁRRAFOS (CORREGIDO Y AMPLIADO)
+    // Ahora incluye em-dash (—), en-dash (–), hyphen (-), horizontal bar (―) y comillas de apertura
+    const dialogueRegex = /^[—–\-―«"“]/;
+    
     const paragraphsRaw = text.split(/\n+/);
     paragraphsRaw.forEach(p => {
         const trimmed = p.trim();
         if (!trimmed) return;
-        // Heurística: Si empieza por raya, guion o comillas, es diálogo
-        if (/^[—\-«"“]/.test(trimmed)) {
+        
+        // Caso 1: Párrafo entero es diálogo
+        if (dialogueRegex.test(trimmed)) {
             dialogueWordCount += trimmed.split(/\s+/).length;
+        } 
+        // Caso 2: Diálogo insertado
+        else {
+             const quoteMatches = trimmed.match(/([“"«][^”"»]+[”"»])/g);
+             if (quoteMatches) {
+                 quoteMatches.forEach(match => {
+                     dialogueWordCount += match.split(/\s+/).length;
+                 });
+            }
         }
     });
 
@@ -195,7 +176,6 @@ export default function StyleOptimizer() {
       const clean = word.toLowerCase().replace(/[.,;:!?()"«»—]/g, "");
       if (!clean) return;
 
-      // Sílabas para legibilidad
       const prosody = getProsody(clean);
       if(prosody) totalSyllables += prosody.numSyllables;
 
@@ -207,7 +187,6 @@ export default function StyleOptimizer() {
       if (PALABRAS_BAUL.has(clean)) baulWords.add(clean);
       if (VERBOS_PERCEPCION.has(clean)) perceptionCount++;
 
-      // Voz pasiva / Se impersonal
       if (clean === 'se' && index < wordsRaw.length - 1) {
           passiveCount++; 
       }
@@ -216,7 +195,6 @@ export default function StyleOptimizer() {
           if (next.endsWith('ado') || next.endsWith('ido')) passiveCount++;
       }
 
-      // Cacofonías
       if (index < wordsRaw.length - 1) {
         const nextWord = wordsRaw[index + 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
         if (clean.length >= 4 && nextWord.length >= 4) {
@@ -224,7 +202,6 @@ export default function StyleOptimizer() {
         }
       }
       
-      // Adjetivos
       if (index < wordsRaw.length - 2) {
          const w2 = wordsRaw[index+1].toLowerCase().replace(/[.,;:!?]/g,"");
          const w3 = wordsRaw[index+2].toLowerCase().replace(/[.,;:!?]/g,"");
@@ -232,10 +209,10 @@ export default function StyleOptimizer() {
          if (!STOPWORDS.has(clean) && isAdj(w2) && isAdj(w3)) adjectiveClusters++;
       }
 
-      if (SENSORY_DICT.sight.has(clean)) sensoryCounts.sight++;
-      if (SENSORY_DICT.sound.has(clean)) sensoryCounts.sound++;
-      if (SENSORY_DICT.touch.has(clean)) sensoryCounts.touch++;
-      if (SENSORY_DICT.smell_taste.has(clean)) sensoryCounts.smell_taste++;
+      if ([...SENSORY_DICT.sight].some(s => clean.includes(s))) sensoryCounts.sight++;
+      if ([...SENSORY_DICT.sound].some(s => clean.includes(s))) sensoryCounts.sound++;
+      if ([...SENSORY_DICT.touch].some(s => clean.includes(s))) sensoryCounts.touch++;
+      if ([...SENSORY_DICT.smell_taste].some(s => clean.includes(s))) sensoryCounts.smell_taste++;
       
       if (word.includes(',')) totalCommas++;
     });
@@ -251,14 +228,12 @@ export default function StyleOptimizer() {
     
     const dialogueRatio = Math.round((dialogueWordCount / wordsRaw.length) * 100);
 
-    // --- 2.1 DATOS POR FRASE ---
     const commasPerSentence = pureSentences.map(s => (s.match(/,/g) || []).length);
     const perceptionPerSentence = pureSentences.map(s => {
         const words = s.toLowerCase().replace(/[.,;:!?]/g, "").split(/\s+/);
         return words.filter(w => VERBOS_PERCEPCION.has(w)).length;
     });
 
-    // --- SENSORY TIMELINE ---
     const sensoryTimeline = pureSentences.map(sentence => {
         const sWords = sentence.toLowerCase().replace(/[.,;:!?]/g, "").split(/\s+/);
         const score = { sight: 0, sound: 0, touch: 0, smell_taste: 0 };
@@ -383,14 +358,6 @@ export default function StyleOptimizer() {
       rawText: text 
     });
     setViewMode("dashboard");
-  };
-
-  const triggerAiAnalysis = async () => {
-    if (!analysis) return;
-    setAiLoading(true);
-    const feedback = await getGeminiFeedback(analysis.rawText);
-    setAiFeedback(feedback);
-    setAiLoading(false);
   };
 
   const handlePrint = () => {
@@ -842,15 +809,82 @@ export default function StyleOptimizer() {
                             <p className="text-red-700 text-xs leading-relaxed opacity-90">Bloque denso de 3 o más frases largas (&gt;20 palabras).</p>
                         </div>
                         <div className="flex flex-col p-4 rounded-lg bg-gray-100 border border-gray-200 h-full"><div className="flex items-center gap-2 mb-2"><Minus size={18} className="text-gray-500" /><span className="text-gray-800 font-bold text-base">Monotonía</span></div><p className="text-gray-600 text-xs leading-relaxed">Secuencia de frases que tienen casi la misma longitud.</p></div><div className="flex flex-col p-4 rounded-lg bg-purple-50 border border-purple-100 h-full"><div className="flex items-center gap-2 mb-2"><div className="flex"><AlignJustify size={18} className="text-purple-500"/><Minus size={18} className="text-purple-500 -ml-1"/></div><span className="text-purple-800 font-bold text-base">Muro Monótono</span></div><p className="text-purple-700 text-xs leading-relaxed opacity-90">La combinación más peligrosa: frases largas y repetitivas.</p></div></div></div><div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700 space-y-6">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const sentences = para.split(/([.!?]+)/); const sentenceElements = []; let buffer = ""; for (let i = 0; i < sentences.length; i++) { const part = sentences[i]; buffer += part; if (/^[.!?]+$/.test(part) || i === sentences.length - 1) { if(buffer.trim().length > 0 && !/^[.!?]+$/.test(buffer)) { const currentIdx = globalSentenceIdx; const activeAlerts = analysis.sismografoAlerts.filter(a => currentIdx >= a.start && currentIdx <= a.end); let style = "hover:bg-gray-50 transition-colors px-1 rounded"; let label = null; let icon = null; const types = activeAlerts.map(a => a.type); if (types.includes('wall') && types.includes('flat')) { style = "bg-purple-100 text-purple-900 decoration-purple-400 underline decoration-double underline-offset-4 font-medium"; const wallAlert = activeAlerts.find(a => a.type === 'wall'); if (currentIdx === wallAlert.start) { label = "Muro Monótono"; icon = <span className="flex"><AlignJustify size={12}/><Minus size={12}/></span>; } } else if (types.includes('staccato') && types.includes('flat')) { style = "bg-teal-100 text-teal-900 decoration-teal-400 underline decoration-double underline-offset-4 font-medium"; const staccatoAlert = activeAlerts.find(a => a.type === 'staccato'); if (currentIdx === staccatoAlert.start) { label = "Staccato Monótono"; icon = <span className="flex"><Zap size={12}/><Minus size={12}/></span>; } } else if (types.includes('wall')) { style = "bg-red-100 text-red-900 decoration-red-300 underline decoration-2 underline-offset-4"; const alert = activeAlerts.find(a => a.type === 'wall'); if (currentIdx === alert.start) { label = "Muro denso"; icon = <AlignJustify size={12}/>; } } else if (types.includes('staccato')) { style = "bg-blue-100 text-blue-900 decoration-blue-300 underline decoration-2 underline-offset-4"; const alert = activeAlerts.find(a => a.type === 'staccato'); if (currentIdx === alert.start) { label = "Ametralladora"; icon = <Zap size={12}/>; } } else if (types.includes('flat')) { style = "bg-gray-200 text-gray-800 decoration-gray-400 underline decoration-2 underline-offset-4"; const alert = activeAlerts.find(a => a.type === 'flat'); if (currentIdx === alert.start) { label = "Monotonía"; icon = <Minus size={12}/>; } } sentenceElements.push(<span key={i} className={`relative inline ${style} mr-1`}>{label && (<span className="absolute -top-5 left-0 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-white border px-1 rounded shadow-sm whitespace-nowrap z-10">{icon} {label}</span>)}{buffer}</span>); globalSentenceIdx++; } else { sentenceElements.push(<span key={i}>{buffer}</span>); } buffer = ""; } } return <p key={pIdx}>{sentenceElements}</p>; })}</div></div>); }
-    if (viewMode === 'detail-cacophony') { /* ... */ return ( <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300"><div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Music className="text-red-500" /> Escáner Sonoro</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div><div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200"><div className="flex items-center gap-3 p-2"><div className="w-4 h-4 rounded-full bg-red-100 border border-red-300 flex items-center justify-center text-[10px] font-bold text-red-600">!</div><div><span className="block text-sm font-bold text-red-700">Choque</span><span className="text-xs text-gray-500">Final e inicio idénticos.</span></div></div><div className="flex items-center gap-3 p-2"><div className="w-4 h-4 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center text-[10px] font-bold text-blue-600">R</div><div><span className="block text-sm font-bold text-blue-700">Repetición</span><span className="text-xs text-gray-500">Misma palabra cerca.</span></div></div><div className="flex items-center gap-3 p-2"><div className="w-4 h-4 rounded-full bg-orange-100 border border-orange-300 flex items-center justify-center text-[10px] font-bold text-orange-600">E</div><div><span className="block text-sm font-bold text-orange-700">Eco</span><span className="text-xs text-gray-500">Rima interna.</span></div></div></div><div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const words = para.split(/(\s+|[.,;:!?()"«»]+)/).filter(w => w.length > 0); const realWordIndices = []; words.forEach((w, i) => { if (/\w+/.test(w) && w.trim().length > 0) realWordIndices.push(i); }); return ( <p key={pIdx} className="mb-6"> {words.map((w, i) => { if (!/\w+/.test(w)) return <span key={i}>{w}</span>; const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); if (clean.length < 2) return <span key={i}>{w}</span>; let styleClass = ""; let title = ""; const currentRealIdxPos = realWordIndices.indexOf(i); if (currentRealIdxPos === -1) return <span key={i}>{w}</span>; if (clean.length >= 3 && currentRealIdxPos < realWordIndices.length - 1) { const nextWIdx = realWordIndices[currentRealIdxPos + 1]; const nextW = words[nextWIdx].toLowerCase().replace(/[.,;:!?()"«»]/g, ""); if (nextW.length >= 3 && clean.slice(-2) === nextW.slice(0, 2)) { styleClass = "text-red-600 font-bold decoration-wavy underline decoration-red-300 bg-red-50"; title = "Choque sonoro"; } } if (!styleClass && !STOPWORDS.has(clean) && clean.length > 3) { const searchRange = realWordIndices.slice(currentRealIdxPos + 1, currentRealIdxPos + 15); const isRepeated = searchRange.some(idx => words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, "") === clean); const searchRangeBack = realWordIndices.slice(Math.max(0, currentRealIdxPos - 15), currentRealIdxPos); const isRepeatedBack = searchRangeBack.some(idx => words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, "") === clean); if (isRepeated || isRepeatedBack) { styleClass = "bg-blue-100 text-blue-900 border-b border-blue-300"; title = "Repetición cercana"; } } if (!styleClass && !STOPWORDS.has(clean) && clean.length > 4) { const suffix = clean.slice(-3); const searchRange = realWordIndices.slice(currentRealIdxPos + 1, currentRealIdxPos + 10); const hasEcho = searchRange.some(idx => { const target = words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, ""); return target.length > 4 && target.endsWith(suffix) && target !== clean; }); const searchRangeBack = realWordIndices.slice(Math.max(0, currentRealIdxPos - 10), currentRealIdxPos); const hasEchoBack = searchRangeBack.some(idx => { const target = words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, ""); return target.length > 4 && target.endsWith(suffix) && target !== clean; }); if (hasEcho || hasEchoBack) { styleClass = "text-orange-700 decoration-dotted underline decoration-orange-400 bg-orange-50"; title = "Eco / Rima interna"; } } return <span key={i} className={styleClass} title={title}>{w}</span>; })} </p> ); })}</div></div>); }
+    if (viewMode === 'detail-cacophony') {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                        <Music className="text-red-500" /> Escáner Sonoro: Cacofonías y Ecos
+                    </h2>
+                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
+                </div>
+
+                {/* GRAPHIC: SOUND DISTRIBUTION (NEW) */}
+                <div className="mb-10 p-5 bg-gray-50 rounded-xl border border-gray-200">
+                    <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <Activity size={16}/> Distribución Sonora (Línea de Tiempo)
+                    </h3>
+                    <div className="h-16 flex items-end gap-0.5 border-b border-gray-300 pb-1 overflow-x-auto mb-2 w-full">
+                        {
+                            // We need sentence-level logic for visual graph without complex re-calc
+                            // Simple approximation: Check word logic per sentence text
+                             (() => {
+                                const sentencesForGraph = analysis.rawText.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s));
+                                
+                                return sentencesForGraph.map((sent, i) => {
+                                     const words = sent.toLowerCase().replace(/[.,;:!?()"«»]/g, "").split(/\s+/).filter(w => w.length > 0);
+                                     let hasShock = false;
+                                     let hasEcho = false;
+                                     let hasRep = false; // Local proximity repetition check is hard here, let's stick to Sound/Echo/Shock primarily or assume analysis.repetitions applies
+                                     
+                                     // Mini-scan for graph coloring
+                                     words.forEach((w, wIdx) => {
+                                         if (w.length < 2) return;
+                                         // Shock
+                                         if (wIdx < words.length - 1) {
+                                             const next = words[wIdx+1];
+                                             if (w.length >= 3 && next.length >= 3 && w.slice(-2) === next.slice(0,2)) hasShock = true;
+                                         }
+                                         // Echo
+                                         for (let k = 1; k <= 3; k++) {
+                                            if (wIdx + k < words.length) {
+                                                const target = words[wIdx+k];
+                                                if (w.length > 4 && target.length > 4 && w.slice(-3) === target.slice(-3)) hasEcho = true;
+                                            }
+                                         }
+                                     });
+                                     
+                                     let color = 'bg-gray-200';
+                                     let title = `Frase ${i+1}`;
+                                     if (hasShock) { color = 'bg-red-400'; title += ": Choque"; }
+                                     else if (hasEcho) { color = 'bg-orange-400'; title += ": Eco"; }
+                                     
+                                     return (
+                                         <div 
+                                            key={i}
+                                            className={`flex-1 h-full ${color} hover:opacity-80 transition-all flex-shrink-0`}
+                                            style={{ minWidth: '4px', height: (hasShock || hasEcho) ? '100%' : '20%' }}
+                                            title={title}
+                                         />
+                                     )
+                                });
+                            })()
+                        }
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2 text-center italic">Las barras de color indican frases con problemas sonoros.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200"><div className="flex items-center gap-3 p-2"><div className="w-4 h-4 rounded-full bg-red-100 border border-red-300 flex items-center justify-center text-[10px] font-bold text-red-600">!</div><div><span className="block text-sm font-bold text-red-700">Choque</span><span className="text-xs text-gray-500">Final e inicio idénticos.</span></div></div><div className="flex items-center gap-3 p-2"><div className="w-4 h-4 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center text-[10px] font-bold text-blue-600">R</div><div><span className="block text-sm font-bold text-blue-700">Repetición</span><span className="text-xs text-gray-500">Misma palabra cerca.</span></div></div><div className="flex items-center gap-3 p-2"><div className="w-4 h-4 rounded-full bg-orange-100 border border-orange-300 flex items-center justify-center text-[10px] font-bold text-orange-600">E</div><div><span className="block text-sm font-bold text-orange-700">Eco</span><span className="text-xs text-gray-500">Rima interna.</span></div></div></div><div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const words = para.split(/(\s+|[.,;:!?()"«»]+)/).filter(w => w.length > 0); const realWordIndices = []; words.forEach((w, i) => { if (/\w+/.test(w) && w.trim().length > 0) realWordIndices.push(i); }); return ( <p key={pIdx} className="mb-6"> {words.map((w, i) => { if (!/\w+/.test(w)) return <span key={i}>{w}</span>; const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); if (clean.length < 2) return <span key={i}>{w}</span>; let styleClass = ""; let title = ""; const currentRealIdxPos = realWordIndices.indexOf(i); if (currentRealIdxPos === -1) return <span key={i}>{w}</span>; if (clean.length >= 3 && currentRealIdxPos < realWordIndices.length - 1) { const nextWIdx = realWordIndices[currentRealIdxPos + 1]; const nextW = words[nextWIdx].toLowerCase().replace(/[.,;:!?()"«»]/g, ""); if (nextW.length >= 3 && clean.slice(-2) === nextW.slice(0, 2)) { styleClass = "text-red-600 font-bold decoration-wavy underline decoration-red-300 bg-red-50"; title = "Choque sonoro"; } } if (!styleClass && !STOPWORDS.has(clean) && clean.length > 3) { const searchRange = realWordIndices.slice(currentRealIdxPos + 1, currentRealIdxPos + 15); const isRepeated = searchRange.some(idx => words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, "") === clean); const searchRangeBack = realWordIndices.slice(Math.max(0, currentRealIdxPos - 15), currentRealIdxPos); const isRepeatedBack = searchRangeBack.some(idx => words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, "") === clean); if (isRepeated || isRepeatedBack) { styleClass = "bg-blue-100 text-blue-900 border-b border-blue-300"; title = "Repetición cercana"; } } if (!styleClass && !STOPWORDS.has(clean) && clean.length > 4) { const suffix = clean.slice(-3); const searchRange = realWordIndices.slice(currentRealIdxPos + 1, currentRealIdxPos + 10); const hasEcho = searchRange.some(idx => { const target = words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, ""); return target.length > 4 && target.endsWith(suffix) && target !== clean; }); const searchRangeBack = realWordIndices.slice(Math.max(0, currentRealIdxPos - 10), currentRealIdxPos); const hasEchoBack = searchRangeBack.some(idx => { const target = words[idx].toLowerCase().replace(/[.,;:!?()"«»]/g, ""); return target.length > 4 && target.endsWith(suffix) && target !== clean; }); if (hasEcho || hasEchoBack) { styleClass = "text-orange-700 decoration-dotted underline decoration-orange-400 bg-orange-50"; title = "Eco / Rima interna"; } } return <span key={i} className={styleClass} title={title}>{w}</span>; })} </p> ); })}</div></div>); }
     if (viewMode === 'detail-baul') { /* ... */ return ( <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300"><div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><AlertTriangle className="text-yellow-500" /> Palabras Baúl</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div><div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200"><div className="flex items-start gap-3 p-2"><div className="w-8 h-8 rounded-full bg-orange-100 border border-orange-300 flex-shrink-0 flex items-center justify-center text-orange-600"><MousePointerClick size={16} /></div><div><span className="block text-sm font-bold text-orange-800">Verbos Comodín</span><span className="text-xs text-gray-600 block mt-1">Verbos de significado muy amplio.</span></div></div><div className="flex items-start gap-3 p-2"><div className="w-8 h-8 rounded-full bg-yellow-100 border border-yellow-300 flex-shrink-0 flex items-center justify-center text-yellow-700"><Box size={16} /></div><div><span className="block text-sm font-bold text-yellow-800">Sustantivos Vagos</span><span className="text-xs text-gray-600 block mt-1">Términos abstractos o genéricos.</span></div></div></div><div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const words = para.split(/(\s+)/); return ( <p key={pIdx} className="mb-6"> {words.map((w, wIdx) => { const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); let styleClass = ""; if (VERBOS_BAUL.has(clean)) styleClass = "bg-orange-100 text-orange-900 border-b-2 border-orange-300 cursor-help transition-colors hover:bg-orange-200"; else if (SUSTANTIVOS_BAUL.has(clean)) styleClass = "bg-yellow-100 text-yellow-900 border-b-2 border-yellow-300 cursor-help transition-colors hover:bg-yellow-200"; return <span key={wIdx} className={styleClass}>{w}</span>; })} </p> ); })}</div></div>); }
     if (viewMode === 'detail-metrics') { /* ... */ return ( <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300"><div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Layers className="text-purple-500" /> Análisis de Densidad y Estilo</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div>
     
-    {/* GRAPHIC: METRICS DISTRIBUTION (NEW) */}
+    {/* GRAPHIC: METRICS DISTRIBUTION */}
     <div className="mb-10 p-5 bg-gray-50 rounded-xl border border-gray-200"><h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider flex items-center gap-2"><Activity size={16}/> Distribución de Estilo (Línea de Tiempo)</h3><div className="space-y-3"><div className="flex items-center gap-3"><div className="w-6 text-xs font-bold text-purple-500 text-right">-mte</div><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((s, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 flex-shrink-0 ${s.mente > 0 ? 'bg-purple-500' : 'bg-transparent'}`} title={`Frase ${i+1}: ${s.mente} adverbios`} />))}</div></div><div className="flex items-center gap-3"><div className="w-6 text-xs font-bold text-indigo-500 text-right">-ción</div><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((s, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 flex-shrink-0 ${s.cion > 0 ? 'bg-indigo-500' : 'bg-transparent'}`} title={`Frase ${i+1}: ${s.cion} nominalizaciones`} />))}</div></div><div className="flex items-center gap-3"><div className="w-6 text-xs font-bold text-orange-500 text-right">Adj+</div><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((s, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 flex-shrink-0 ${s.adj > 0 ? 'bg-orange-500' : 'bg-transparent'}`} title={`Frase ${i+1}: ${s.adj} clusters de adjetivos`} />))}</div></div></div><p className="text-xs text-gray-400 mt-3 text-center italic">Cada bloque representa una frase. Los colores indican la presencia de elementos de estilo.</p></div>
     
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200"><div className="flex items-start gap-3 p-2"><div className="w-10 h-10 rounded-full bg-purple-100 border border-purple-300 flex-shrink-0 flex items-center justify-center text-purple-600 font-bold text-xs">-mte</div><div><span className="block text-sm font-bold text-purple-800">Adverbios -mente</span><span className="text-xs text-gray-600 block mt-1">Abuso indica verbos débiles.</span></div></div><div className="flex items-start gap-3 p-2"><div className="w-10 h-10 rounded-full bg-indigo-100 border border-indigo-300 flex-shrink-0 flex items-center justify-center text-indigo-600 font-bold text-xs">-ción</div><div><span className="block text-sm font-bold text-indigo-800">Nominalizaciones</span><span className="text-xs text-gray-600 block mt-1">Estilo burocrático.</span></div></div><div className="flex items-start gap-3 p-2"><div className="w-10 h-10 rounded-full bg-orange-100 border border-orange-300 flex-shrink-0 flex items-center justify-center text-orange-600 font-bold text-xs">Adj+</div><div><span className="block text-sm font-bold text-orange-800">Clusters Adjetivos</span><span className="text-xs text-gray-600 block mt-1">Saturan la descripción.</span></div></div></div><div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const words = para.split(/(\s+|[.,;:!?()"«»]+)/).filter(w => w.length > 0); return ( <p key={pIdx} className="mb-6"> {words.map((w, i) => { if (!/\w+/.test(w)) return <span key={i}>{w}</span>; const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); let styleClass = ""; if (clean.endsWith("mente") && clean.length > 5) styleClass = "text-purple-700 bg-purple-50 font-bold border-b border-purple-200"; else if ((clean.endsWith("ción") || clean.endsWith("cion")) && clean.length > 4) styleClass = "text-indigo-700 bg-indigo-50 font-bold border-b border-indigo-200"; else { const isAdj = (word) => SUFIJOS_ADJETIVOS.some(s => word.toLowerCase().endsWith(s)); if (isAdj(clean) && !STOPWORDS.has(clean)) { const prevW = i > 1 ? words[i-2].toLowerCase().replace(/[.,;:!?]/g,"") : ""; const nextW = i < words.length - 2 ? words[i+2].toLowerCase().replace(/[.,;:!?]/g,"") : ""; if ((isAdj(prevW) && !STOPWORDS.has(prevW)) || (isAdj(nextW) && !STOPWORDS.has(nextW))) styleClass = "text-orange-700 bg-orange-50 font-bold border-b border-orange-200"; } } return <span key={i} className={styleClass}>{w}</span>; })} </p> ); })}</div></div>); }
     if (viewMode === 'detail-repetitions') { /* ... */ return ( <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300"><div className="flex justify-between items-center mb-6 border-b pb-4"><div className="flex items-center gap-3"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Repeat className="text-blue-500" /> Repeticiones</h2></div><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div className="bg-blue-50 p-5 rounded-xl border border-blue-100"><div className="flex items-start gap-3 mb-2"><div className="p-2 bg-blue-100 rounded-full text-blue-600"><Repeat size={20} /></div><div><h3 className="font-bold text-blue-900">Eco Léxico</h3><p className="text-xs text-blue-700 mt-1 leading-relaxed">Repetición no intencionada de palabras con carga semántica.</p></div></div></div><div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm"><div className="flex items-center gap-2 mb-3 text-gray-700 font-bold text-sm uppercase tracking-wider border-b pb-2"><List size={16} /> Hallazgos</div>{analysis.repetitions.length > 0 ? (<div className="space-y-2">{analysis.repetitions.slice(0, 5).map(([word, count], idx) => (<div key={word} className="flex justify-between items-center text-sm group"><span className="font-medium text-gray-800 capitalize">{word}</span><span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold">{count}</span></div>))}</div>) : <p className="text-sm text-gray-400">Sin datos.</p>}</div></div><div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const words = para.split(/(\s+)/); return ( <p key={pIdx} className="mb-6"> {words.map((w, wIdx) => { const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); let styleClass = ""; if (viewMode === 'detail-repetitions') { const isRepeated = analysis.repetitions.some(([rw]) => rw === clean); if (isRepeated && !STOPWORDS.has(clean)) styleClass = "bg-blue-100 text-blue-900 font-medium border-b-2 border-blue-200"; } return <span key={wIdx} className={styleClass}>{w}</span>; })} </p> ); })}</div></div>); }
+    
+    // --- VISTA DIÁLOGO (MEJORADA CON REGEX COMPLETA) ---
     if (viewMode === 'detail-dialogue') {
          return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
@@ -872,12 +906,30 @@ export default function StyleOptimizer() {
                 <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
                      {paragraphs.map((para, pIdx) => {
                         if (!para.trim()) return null;
-                        const isDialogue = /^[—\-«"“]/.test(para.trim());
-                        return (
-                            <p key={pIdx} className={`mb-6 p-2 rounded ${isDialogue ? 'bg-blue-50 border-l-4 border-blue-300 text-blue-900' : ''}`}>
-                                {para}
-                            </p>
-                        );
+                        
+                        // Check 1: Paragraph starts with any dialogue marker
+                        const startsWithDialogue = /^[—–\-―«"“]/.test(para.trim());
+                        
+                        if (startsWithDialogue) {
+                            return (
+                                <p key={pIdx} className="mb-6 p-2 rounded bg-blue-50 border-l-4 border-blue-300 text-blue-900">
+                                    {para}
+                                </p>
+                            );
+                        } else {
+                            // Check 2: Inline quotes inside narrative paragraph
+                            const parts = para.split(/([“"«][^”"»]+[”"»])/g);
+                            return (
+                                <p key={pIdx} className="mb-6">
+                                    {parts.map((part, i) => {
+                                        if (/^[“"«]/.test(part)) {
+                                            return <span key={i} className="bg-blue-50 text-blue-900 font-medium px-1 rounded">{part}</span>;
+                                        }
+                                        return <span key={i}>{part}</span>;
+                                    })}
+                                </p>
+                            );
+                        }
                     })}
                 </div>
             </div>
@@ -889,18 +941,23 @@ export default function StyleOptimizer() {
 
   // Main Dashboard Render
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-800 flex flex-col">
       <header className="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold flex items-center gap-2"><Feather className="w-6 h-6" /> Style Optimizer <span className="text-xs bg-indigo-800 px-2 py-1 rounded text-indigo-200">Ultra</span></h1>
+        <div className="max-w-6xl mx-auto w-full flex justify-between items-center">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Feather className="w-6 h-6" /> 
+                Style Optimizer 
+                <span className="text-xs bg-indigo-800 px-2 py-1 rounded text-indigo-200">Ultra</span>
+                <span className="text-sm font-normal text-indigo-200 ml-2 hidden sm:inline">by Víctor Balcells</span>
+            </h1>
             <div className="flex gap-3">
                 {analysis && <button onClick={handlePrint} className="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-xs transition flex items-center gap-2"><Printer size={14}/> Imprimir Informe</button>}
-                {analysis && viewMode !== 'input' && ( <button onClick={() => { setAnalysis(null); setText(""); setViewMode("input"); setAiFeedback(null); }} className="bg-indigo-800 hover:bg-indigo-600 px-4 py-2 rounded-lg text-xs transition">Nuevo Texto</button> )}
+                {analysis && viewMode !== 'input' && ( <button onClick={() => { setAnalysis(null); setText(""); setViewMode("input"); }} className="bg-indigo-800 hover:bg-indigo-600 px-4 py-2 rounded-lg text-xs transition">Nuevo Texto</button> )}
             </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-6 print:p-0 print:max-w-none">
+      <main className="max-w-6xl mx-auto w-full p-6 flex-grow print:p-0 print:max-w-none">
         
         {viewMode === 'input' && (
           <div className="bg-white rounded-xl shadow-md p-5 transition-all duration-500">
@@ -924,20 +981,11 @@ export default function StyleOptimizer() {
                 <MetricCard icon={<PauseCircle />} label="Densidad Punt." value={analysis.punctuationDensity} color="orange" subtext="Comas/Frase" onClick={() => setViewMode('detail-punctuation')} />
             </div>
             
-            {/* SECONDARY METRICS ROW (NEW) */}
+            {/* SECONDARY METRICS ROW */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <MetricCard icon={<MessageSquare />} label="Diálogo" value={`${analysis.dialogueRatio}%`} color="blue" subtext="vs Narrativa" onClick={() => setViewMode('detail-dialogue')} />
                 <MetricCard icon={<Gauge />} label="Legibilidad" value={analysis.readabilityScore} color="teal" subtext="Escala F. Huerta" onClick={() => setViewMode('detail-readability')} />
                 <MetricCard icon={<UserX />} label="Voz Pasiva" value={analysis.passiveCount} color="gray" subtext="Casos detectados" onClick={() => setViewMode('detail-passive')} />
-            </div>
-
-            {/* IA SECTION */}
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 p-5 shadow-sm print:hidden">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3"><Bot size={24} className="text-purple-600" /><div><h3 className="font-bold text-gray-800">Editor Virtual (IA)</h3><p className="text-xs text-gray-500">Feedback cualitativo inteligente</p></div></div>
-                    {!aiFeedback && (<button onClick={triggerAiAnalysis} disabled={aiLoading} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-2 shadow-md">{aiLoading ? "Analizando..." : <><Sparkles size={14} /> Consultar IA</>}</button>)}
-                </div>
-                {aiFeedback && <div className="mt-4 bg-white p-4 rounded border border-purple-100 text-sm text-gray-700 whitespace-pre-line animate-in fade-in">{aiFeedback}</div>}
             </div>
 
             {/* GRID */}
@@ -1004,6 +1052,24 @@ export default function StyleOptimizer() {
           </div>
         )}
       </main>
+
+      {/* FOOTER */}
+      <footer className="bg-white border-t border-gray-200 py-6 mt-auto">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 gap-4">
+              <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-700">Style Optimizer Ultra</span> 
+                  <span className="text-indigo-600">by Víctor Balcells</span>
+              </div>
+              <div className="flex gap-6">
+                  <a href="https://victorbalcells.com" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors flex items-center gap-1">
+                      <Globe size={16}/> victorbalcells.com
+                  </a>
+                  <a href="https://youtube.com/channel/UCdw2qndef7Jn7FTwQTaTyTw/" target="_blank" rel="noopener noreferrer" className="hover:text-red-600 transition-colors flex items-center gap-1">
+                      <Youtube size={16}/> YouTube Channel
+                  </a>
+              </div>
+          </div>
+      </footer>
     </div>
   );
 }
@@ -1012,7 +1078,7 @@ function DashboardCard({ title, icon, children, onViewDetail }) {
     return (
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col">
             <div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2">{icon}<h3 className="font-bold text-gray-800">{title}</h3></div><button onClick={onViewDetail} className="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-full"><Maximize2 size={16} /></button></div>
-            <div className="mb-2">{children}</div>
+            <div className="mb-2 flex-grow">{children}</div>
             <div className="mt-1 pt-2 border-t border-gray-100"><button onClick={onViewDetail} className="w-full text-center text-xs font-medium text-indigo-600 hover:text-indigo-800">Ver detalles &rarr;</button></div>
         </div>
     );
