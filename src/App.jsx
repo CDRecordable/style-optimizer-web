@@ -3,9 +3,13 @@ import {
   BookOpen, Activity, Repeat, Mic2, AlertTriangle, Feather, Eye, Type, ArrowLeft,
   Music, Zap, Layers, Fingerprint, Ear, Utensils,
   PauseCircle, RefreshCcw, MessageSquare, Gauge, UserX, Printer, Globe, Youtube, 
-  Edit, Package, AlignJustify, Minus, List, ArrowRight, Clock, ArrowDown, Info
+  Edit, Package, AlignJustify, Minus, List, ArrowRight, Clock, ArrowDown, Info,
+  StickyNote, Trash2, PieChart, CheckCircle2, XCircle, Table, BarChart2
 } from 'lucide-react';
-import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell } from 'recharts';
+import { 
+    BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
+    CartesianGrid, Legend, Cell, PieChart as RePie, Pie 
+} from 'recharts';
 
 import { 
     analyzeText, 
@@ -41,6 +45,14 @@ const CustomBarTooltip = ({ active, payload, label, unit }) => {
     }
     return null;
 };
+
+// --- COMPONENTE DE ENCABEZADO DE SECCIÓN ---
+const SectionHeader = ({ icon, title, colorClass }) => (
+    <h3 className={`text-2xl font-black text-slate-700 flex items-center gap-3 mb-8 pb-3 border-b-4 border-slate-200 uppercase tracking-wider ${colorClass}`}>
+        {icon}
+        {title}
+    </h3>
+);
 
 export default function StyleOptimizer() {
   const [mode, setMode] = useState('single'); 
@@ -104,11 +116,6 @@ export default function StyleOptimizer() {
                         <div className="flex items-center gap-4"><span className="text-xs font-bold text-emerald-600 w-16 text-right uppercase">Narrativo</span><div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">{rhythmTimeline.map((r, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasAmphibrach ? 'bg-emerald-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Anfíbraco`}/>))}</div></div>
                         <div className="flex items-center gap-4"><span className="text-xs font-bold text-amber-600 w-16 text-right uppercase">Machacón</span><div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">{rhythmTimeline.map((r, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasTrochee ? 'bg-amber-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Trocaico`}/>))}</div></div>
                     </div>
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-indigo-100"><div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-indigo-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div><div><span className="font-bold text-indigo-800 block">Dáctilo (Óoo)</span><span className="text-xs text-gray-500">Épico, vals, galope.</span></div></div>
-                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-emerald-100"><div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-gray-300"></div><div className="w-2 h-2 rounded-full bg-emerald-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div><div><span className="font-bold text-emerald-800 block">Anfíbraco (oÓo)</span><span className="text-xs text-gray-500">Natural, melodioso.</span></div></div>
-                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-amber-100"><div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-amber-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div><div><span className="font-bold text-amber-800 block">Troqueo (Óo)</span><span className="text-xs text-gray-500">Duro, militar, infantil.</span></div></div>
-                    </div>
                 </div>
                 <div className="space-y-6 font-serif text-lg leading-relaxed text-gray-700">
                     {analysis.rhythmAnalysis.map((sentData, idx) => {
@@ -142,28 +149,42 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
-    // 2. DETALLE: VOZ PASIVA
+    // 2. DETALLE: VOZ PASIVA (AÑADIDO GRÁFICO)
     if (viewMode === 'detail-passive') {
+        const activeSentences = analysis.sentenceCount - analysis.passiveCount;
+        const data = [
+            { name: 'Activa', value: activeSentences },
+            { name: 'Pasiva', value: analysis.passiveCount },
+        ];
+        const COLORS = ['#4ade80', '#94a3b8'];
+
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><UserX className="text-gray-500" /> Voz Pasiva e Impersonal</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div>
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><AlertTriangle className="text-amber-500" size={20}/> La Trampa de la Pasiva</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                            <div className="bg-white p-3 rounded border border-slate-200 shadow-sm"><p className="text-xs text-slate-400 font-bold uppercase mb-1">EJEMPLO PASIVO (Evitar)</p><p className="text-red-700 font-medium">"La decisión <span className="bg-red-100 px-1 rounded">fue tomada</span> por el comité."</p></div>
-                            <div className="flex justify-center"><ArrowDown className="text-slate-300"/></div>
-                            <div className="bg-white p-3 rounded border border-green-200 shadow-sm ring-1 ring-green-100"><p className="text-xs text-green-600 font-bold uppercase mb-1">EJEMPLO ACTIVO (Preferir)</p><p className="text-green-800 font-bold">"El comité <span className="underline decoration-green-400 decoration-2">tomó</span> la decisión."</p></div>
-                        </div>
-                        <div className="text-sm text-slate-600 space-y-4"><p><strong className="text-slate-800">¿Por qué corregirlo?</strong><br/>La voz pasiva oculta al "agente" (quién hace la acción). Hace que el texto suene burocrático, débil o distante. </p><ul className="list-disc list-inside space-y-1 ml-2"><li>Busca construcciones con <strong>"SER + Participio"</strong> (fue hecho, ha sido visto).</li><li>Cuidado con el <strong>"SE" impersonal</strong> (se dice, se comenta).</li></ul></div>
+                
+                {/* CONTEXTO Y GRÁFICO */}
+                <div className="flex flex-col md:flex-row gap-8 mb-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <div className="w-full md:w-1/3 h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RePie>
+                                <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={70} fill="#8884d8" dataKey="value" paddingAngle={5}>
+                                    {data.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
+                                </Pie>
+                                <Tooltip />
+                                <Legend verticalAlign="bottom" height={36}/>
+                            </RePie>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="w-full md:w-2/3 space-y-3">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2"><AlertTriangle className="text-amber-500" size={20}/> ¿Por qué evitar la pasiva?</h3>
+                        <p className="text-sm text-slate-600">La voz pasiva ("fue hecho por") oculta al responsable de la acción y alarga la frase innecesariamente. En español, suena burocrática o traducida del inglés. <br/><br/><strong>Objetivo:</strong> Mantener la pasiva por debajo del 5% de tus frases.</p>
                     </div>
                 </div>
+
                 <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => ( <p key={pIdx} className="mb-6"> {para.split(/(\s+)/).map((w, i) => { if (!/\w+/.test(w)) return <span key={i}>{w}</span>; const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); const isPassive = (clean === 'se' || clean === 'fue' || clean === 'fueron' || clean === 'sido' || clean === 'siendo'); return <span key={i} className={isPassive ? "bg-slate-200 text-slate-800 font-bold border-b-2 border-slate-400 px-1 rounded cursor-help" : ""}>{w}</span>; })} </p> ))}</div>
             </div>
         );
     }
-
     // 3. DETALLE: LEGIBILIDAD
     if (viewMode === 'detail-readability') {
         const score = analysis.readabilityScore;
@@ -180,7 +201,6 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
     // 4. DETALLE: DIÁLOGO
     if (viewMode === 'detail-dialogue') {
          return (
@@ -191,7 +211,6 @@ export default function StyleOptimizer() {
             </div>
          );
     }
-
     // 5. DETALLE: SISMÓGRAFO
     if (viewMode === 'detail-sismografo') {
          let globalSentenceIdx = 0; 
@@ -213,32 +232,30 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Activity className="text-indigo-500" /> Mapa de Longitud y Cadencia</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                
-                <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2"><Activity size={16}/> Ritmo Visual (Colores indican anomalías)</h3>
-                    <div className="h-64 w-full mb-6">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                <XAxis dataKey="id" tick={{fontSize: 10}} tickLine={false} axisLine={false} interval={4} />
-                                <YAxis hide />
-                                <Tooltip content={<CustomBarTooltip unit="palabras" />} cursor={{fill: 'transparent'}} />
-                                <Bar dataKey="len" radius={[4, 4, 0, 0]}>
-                                    {chartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-500 rounded-full"></div><span className="text-xs font-bold text-gray-600">Staccato (Rápido)</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-500 rounded-full"></div><span className="text-xs font-bold text-gray-600">Muro (Denso)</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-gray-400 rounded-full"></div><span className="text-xs font-bold text-gray-600">Monotonía</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-indigo-400 rounded-full"></div><span className="text-xs font-bold text-gray-600">Normal</span></div>
-                    </div>
+
+                {/* --- LEYENDA AÑADIDA --- */}
+                <div className="flex flex-wrap justify-center gap-4 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Staccato (Rápido)</span></div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Muro (Denso)</span></div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-gray-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Monotonía (Repetitivo)</span></div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 bg-indigo-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Fluido (Normal)</span></div>
                 </div>
 
+                <div className="h-64 w-full mb-8">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                            <XAxis dataKey="id" tick={{fontSize: 10}} tickLine={false} axisLine={false} interval={4} />
+                            <YAxis hide />
+                            <Tooltip content={<CustomBarTooltip unit="palabras" />} cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="len" radius={[4, 4, 0, 0]}>
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
                 <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
                    {paragraphs.map((para, pIdx) => {
                        if (!para.trim()) return null;
@@ -272,8 +289,7 @@ export default function StyleOptimizer() {
             </div>
          )
     }
-
-    // 6. DETALLE: SHOW VS TELL
+    // 6. DETALLE: SHOW VS TELL (AÑADIDO GRÁFICO Y CONTEXTO)
     if (viewMode === 'detail-showtell') {
         const chartData = analysis.perceptionPerSentence.map((count, i) => ({
             id: i+1,
@@ -287,13 +303,20 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Eye className="text-green-600" /> Show vs Tell (Filtros Mentales)</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                
-                <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2"><Activity size={16}/> Densidad de "Filtros" por frase</h3>
-                    <div className="h-40 mb-6">
+
+                {/* CONTEXTO Y GRÁFICO */}
+                <div className="mb-8 bg-green-50 p-6 rounded-xl border border-green-200">
+                    <div className="flex gap-4 items-start mb-4">
+                        <div className="p-2 bg-white rounded-lg shadow-sm text-green-600"><Eye size={24}/></div>
+                        <div>
+                            <h3 className="font-bold text-green-900">Filtros de Percepción</h3>
+                            <p className="text-sm text-green-800 mt-1">Palabras como <i>"vio", "oyó", "sintió", "parecía"</i> distancian al lector. En lugar de decir "Vio que la habitación estaba sucia", describe la suciedad directamente ("El polvo cubría los muebles").</p>
+                        </div>
+                    </div>
+                    <div className="h-32 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb"/>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#dcfce7"/>
                                 <XAxis dataKey="id" hide />
                                 <Tooltip content={<CustomBarTooltip unit="filtros" />} cursor={{fill: 'transparent'}} />
                                 <Bar dataKey="visualValue" radius={[4, 4, 0, 0]}>
@@ -305,11 +328,12 @@ export default function StyleOptimizer() {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="flex justify-center gap-8">
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-400 rounded-full"></div><span className="text-sm font-medium text-gray-600">Show (Directo)</span></div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded-full"></div><span className="text-sm font-medium text-gray-600">Tell (Filtro)</span></div>
+                    <div className="flex justify-center gap-6 mt-2 text-xs font-bold text-green-800 opacity-70">
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 bg-green-400 rounded-full"></div> Inmersivo (Show)</span>
+                        <span className="flex items-center gap-1"><div className="w-2 h-2 bg-red-400 rounded-full"></div> Filtrado (Tell)</span>
                     </div>
                 </div>
+
                 <div className="prose max-w-none text-lg text-gray-700 font-serif">
                      {paragraphs.map((para, pIdx) => (
                         <p key={pIdx} className="mb-6">
@@ -324,8 +348,7 @@ export default function StyleOptimizer() {
             </div>
         )
     }
-
-    // 7. DETALLE: PALABRAS BAÚL
+    // 7. DETALLE: PALABRAS BAÚL (TIMELINE MEJORADO)
     if (viewMode === 'detail-baul') {
         return (
              <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px]">
@@ -333,17 +356,44 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Package className="text-orange-500" /> Palabras Baúl</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mb-6 bg-orange-50 p-4 rounded-xl border border-orange-100">
-                    <div className="flex items-start gap-3"><div className="p-2 bg-orange-100 rounded text-orange-600"><AlertTriangle size={16}/></div><div><h4 className="font-bold text-orange-900 text-sm">Verbos Comodín</h4><p className="text-xs text-orange-700 mt-1">Hacer, tener, poner...</p></div></div>
-                     <div className="flex items-start gap-3"><div className="p-2 bg-yellow-100 rounded text-yellow-600"><Package size={16}/></div><div><h4 className="font-bold text-yellow-900 text-sm">Sustantivos Vagos</h4><p className="text-xs text-yellow-700 mt-1">Cosa, algo, tema...</p></div></div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-orange-50 p-5 rounded-xl border border-orange-100">
+                        <h3 className="font-bold text-orange-900 mb-2 flex items-center gap-2"><Info size={16}/> ¿Qué son?</h3>
+                        <p className="text-sm text-orange-800 mb-2">Términos vagos como <i>"cosa", "algo", "hacer", "tener"</i> que diluyen la precisión de tu texto.</p>
+                        <div className="flex gap-2 text-xs font-bold mt-3">
+                            <span className="bg-white px-2 py-1 rounded text-orange-600 border border-orange-200">Hacer → Construir</span>
+                            <span className="bg-white px-2 py-1 rounded text-orange-600 border border-orange-200">Cosa → Objeto</span>
+                        </div>
+                    </div>
+                    
+                    {/* TIMELINE DE PALABRAS BAÚL */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Distribución en el texto</h3>
+                        <div className="h-12 w-full bg-gray-100 rounded-full relative flex items-center overflow-hidden">
+                            {analysis.baulTimeline.map((item, idx) => (
+                                <div 
+                                    key={idx}
+                                    className="absolute w-1 h-full bg-orange-500 opacity-50 hover:opacity-100 transition-all"
+                                    style={{ left: `${item.position * 100}%` }}
+                                    title={`"${item.word}" en ${(item.position * 100).toFixed(0)}%`}
+                                />
+                            ))}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-mono">
+                            <span>Inicio</span>
+                            <span>Final</span>
+                        </div>
+                    </div>
                 </div>
+
                 <div className="prose max-w-none text-lg text-gray-700 font-serif">
                      {paragraphs.map((para, pIdx) => (
                         <p key={pIdx} className="mb-6">
                             {para.split(/(\s+)/).map((w, i) => {
                                 const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, "");
                                 const isBaul = PALABRAS_BAUL.has(clean);
-                                return <span key={i} className={isBaul ? "bg-orange-100 text-orange-900 border-b-2 border-orange-300 px-1 rounded" : ""}>{w}</span>
+                                return <span key={i} className={isBaul ? "bg-orange-100 text-orange-900 border-b-2 border-orange-300 px-1 rounded font-bold" : ""}>{w}</span>
                             })}
                         </p>
                      ))}
@@ -351,8 +401,7 @@ export default function StyleOptimizer() {
             </div>
         )
     }
-
-    // 8. DETALLE: DENSIDAD DE PUNTUACIÓN
+    // 8. DETALLE: DENSIDAD DE PUNTUACIÓN (GRÁFICO RESTAURADO & LEYENDA MEJORADA)
     if (viewMode === 'detail-punctuation') {
         const chartData = analysis.commasPerSentence.map((count, i) => ({
             id: i+1,
@@ -363,34 +412,33 @@ export default function StyleOptimizer() {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><PauseCircle className="text-orange-500" /> Ritmo Respiratorio (Puntuación)</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><PauseCircle className="text-orange-500" /> Ritmo Respiratorio</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2"><Activity size={16}/> Densidad de Comas por Frase</h3>
-                    <div className="h-40 mb-6">
-                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                <XAxis dataKey="id" hide />
-                                <YAxis allowDecimals={false} hide />
-                                <Tooltip content={<CustomBarTooltip unit="comas" />} cursor={{fill: 'transparent'}} />
-                                <Bar dataKey="visualValue" radius={[4, 4, 0, 0]}>
-                                    {chartData.map((entry, index) => {
-                                        const count = entry.realValue;
-                                        let color = "#4ade80"; // Green
-                                        if (count === 0) color = "#60a5fa"; // Blue
-                                        if (count > 3) color = "#f87171"; // Red
-                                        return <Cell key={`cell-${index}`} fill={color} />;
-                                    })}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-blue-50 p-3 rounded border border-blue-100"><span className="block font-bold text-blue-800 text-sm mb-1">0 Comas (Directo)</span><p className="text-xs text-blue-600">Barras azules. Frase directa y rápida.</p></div>
-                        <div className="bg-green-50 p-3 rounded border border-green-100"><span className="block font-bold text-green-800 text-sm mb-1">1-3 Comas (Equilibrado)</span><p className="text-xs text-green-600">Barras verdes. Ritmo estándar.</p></div>
-                        <div className="bg-red-50 p-3 rounded border border-red-100"><span className="block font-bold text-red-800 text-sm mb-1">4+ Comas (Laberíntico)</span><p className="text-xs text-red-600">Barras rojas. Riesgo de perder al lector.</p></div>
+                
+                {/* GRÁFICO RESTAURADO CON ENCUADRE CORREGIDO */}
+                <div className="h-48 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                            <XAxis dataKey="id" hide />
+                            <YAxis allowDecimals={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
+                            <Tooltip content={<CustomBarTooltip unit="comas" />} cursor={{fill: 'transparent'}} />
+                            <Bar dataKey="visualValue" radius={[4, 4, 0, 0]}>
+                                {chartData.map((entry, index) => {
+                                    const count = entry.realValue;
+                                    let color = "#4ade80"; // Green
+                                    if (count === 0) color = "#60a5fa"; // Blue (Muy rápido)
+                                    if (count > 3) color = "#f87171"; // Red (Denso)
+                                    return <Cell key={`cell-${index}`} fill={color} />;
+                                })}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                    <div className="flex justify-center gap-6 mt-3 pt-2 border-t border-gray-200">
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-400 rounded"></div> <span className="text-xs font-bold text-gray-600">0 Comas (Simple)</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-400 rounded"></div> <span className="text-xs font-bold text-gray-600">1-3 Comas (Normal)</span></div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded"></div> <span className="text-xs font-bold text-gray-600">+3 Comas (Laberíntico)</span></div>
                     </div>
                 </div>
 
@@ -402,9 +450,7 @@ export default function StyleOptimizer() {
                                 {sentences.map((part, sIdx) => {
                                     if (/^[.!?]+$/.test(part) || part.trim().length === 0) return <span key={sIdx}>{part}</span>;
                                     const commaCount = (part.match(/,/g) || []).length;
-                                    // Si la frase es laberíntica, la marcamos entera
                                     const isLabyrinth = commaCount > 3;
-                                    
                                     return (
                                         <span key={sIdx} className={isLabyrinth ? "bg-red-50 text-red-900 decoration-red-300 underline decoration-wavy" : ""}>
                                             {part.split(/([,])/).map((token, i) => (
@@ -420,8 +466,7 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
-    // 9. DETALLE: MÉTRICAS DE ESTILO
+    // 9. DETALLE: MÉTRICAS DE ESTILO (CORREGIDO RESALTADO TEXTO)
     if (viewMode === 'detail-metrics') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
@@ -429,24 +474,91 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Layers className="text-purple-500" /> Análisis de Densidad y Estilo</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
+
+                {/* VISUALIZACIÓN EN GRÁFICO (TIMELINE DE ESTILO) */}
                 <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2"><Activity size={16}/> Distribución de Estilo</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-purple-500 w-10 text-right">-mte</span><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((m, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${m.mente > 0 ? 'bg-purple-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Adverbio`}/>))}</div></div>
-                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-indigo-500 w-10 text-right">-ción</span><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((m, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${m.cion > 0 ? 'bg-indigo-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Nominalización`}/>))}</div></div>
-                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-orange-500 w-10 text-right">Adj+</span><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((m, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${m.adj > 0 ? 'bg-orange-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Cluster Adjetivos`}/>))}</div></div>
-                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-teal-500 w-10 text-right">Inicio</span><div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">{analysis.metricsTimeline.map((_, i) => { const isAnaphora = analysis.anaphoraAlerts.some(a => a.indices.includes(i)); return <div key={i} className={`flex-1 h-full border-r border-white/20 ${isAnaphora ? 'bg-teal-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Inicio Repetitivo`}/> })}</div></div>
+                    <h3 className="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2"><Activity size={16}/> Mapa de Calor Estilístico</h3>
+                    <div className="flex flex-col gap-6">
+                        {/* CARRIL: ADVERBIOS */}
+                        <div className="flex items-center gap-4">
+                             <div className="w-24 text-right">
+                                <span className="block text-xs font-bold text-purple-600 uppercase">-mente</span>
+                                <span className="text-[10px] text-gray-400">Adverbios</span>
+                             </div>
+                             <div className="flex-1 h-6 bg-gray-200 rounded flex overflow-hidden">
+                                {analysis.metricsTimeline.map((m, i) => (
+                                    <div key={i} className={`flex-1 h-full border-r border-white/20 transition-colors hover:opacity-80 ${m.mente > 0 ? 'bg-purple-500' : 'bg-transparent'}`} title={`Frase ${i+1}: ${m.mente} adverbios`}/>
+                                ))}
+                             </div>
+                        </div>
+                         {/* CARRIL: NOMINALIZACIONES */}
+                        <div className="flex items-center gap-4">
+                             <div className="w-24 text-right">
+                                <span className="block text-xs font-bold text-indigo-600 uppercase">-ción</span>
+                                <span className="text-[10px] text-gray-400">Nominaliz.</span>
+                             </div>
+                             <div className="flex-1 h-6 bg-gray-200 rounded flex overflow-hidden">
+                                {analysis.metricsTimeline.map((m, i) => (
+                                    <div key={i} className={`flex-1 h-full border-r border-white/20 transition-colors hover:opacity-80 ${m.cion > 0 ? 'bg-indigo-500' : 'bg-transparent'}`} title={`Frase ${i+1}: ${m.cion} nominalizaciones`}/>
+                                ))}
+                             </div>
+                        </div>
+                        {/* CARRIL: ADJETIVOS */}
+                        <div className="flex items-center gap-4">
+                             <div className="w-24 text-right">
+                                <span className="block text-xs font-bold text-orange-600 uppercase">Adj+</span>
+                                <span className="text-[10px] text-gray-400">Clusters</span>
+                             </div>
+                             <div className="flex-1 h-6 bg-gray-200 rounded flex overflow-hidden">
+                                {analysis.metricsTimeline.map((m, i) => (
+                                    <div key={i} className={`flex-1 h-full border-r border-white/20 transition-colors hover:opacity-80 ${m.adj > 0 ? 'bg-orange-500' : 'bg-transparent'}`} title={`Frase ${i+1}: ${m.adj} clusters`}/>
+                                ))}
+                             </div>
+                        </div>
                     </div>
                 </div>
+
                 <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
                     {paragraphs.map((para, pIdx) => (
                         <p key={pIdx} className="mb-6">
-                            {para.split(/(\s+)/).map((w, i) => {
+                            {para.split(/(\s+)/).map((w, i, arr) => {
                                 const clean = w.toLowerCase().replace(/[.,;:!?]/g, "");
                                 let style = "";
-                                if (clean.endsWith("mente") && clean.length > 5) style = "bg-purple-100 text-purple-900 border-b-2 border-purple-300";
-                                else if ((clean.endsWith("ción") || clean.endsWith("cion")) && clean.length > 4) style = "bg-indigo-100 text-indigo-900 border-b-2 border-indigo-300";
-                                return <span key={i} className={style}>{w}</span>;
+                                let title = "";
+                                
+                                // Verificamos CADA condición independientemente para que no se pisen
+                                // 1. Adverbios
+                                if (clean.endsWith("mente") && clean.length > 5) {
+                                    style += " bg-purple-100 text-purple-900 border-b-2 border-purple-300";
+                                    title = "Adverbio -mente";
+                                }
+                                // 2. Nominalizaciones
+                                if ((clean.endsWith("ción") || clean.endsWith("cion")) && clean.length > 4) {
+                                    style += " bg-indigo-100 text-indigo-900 border-b-2 border-indigo-300";
+                                    title = "Nominalización";
+                                }
+                                
+                                // 3. Cluster Adjetivos (Lógica en línea - Marcar ambas palabras)
+                                const isAdj = (word) => SUFIJOS_ADJETIVOS.some(s => word && word.endsWith(s));
+                                let isClusterPart = false;
+                                if (!STOPWORDS.has(clean) && isAdj(clean)) {
+                                    if (i < arr.length - 1) {
+                                        const nextW = arr[i+1].toLowerCase().replace(/[.,;:!?]/g,"");
+                                        if (isAdj(nextW) && !STOPWORDS.has(nextW)) isClusterPart = true;
+                                    }
+                                    if (i > 0) {
+                                        const prevW = arr[i-1].toLowerCase().replace(/[.,;:!?]/g,"");
+                                        if (isAdj(prevW) && !STOPWORDS.has(prevW)) isClusterPart = true;
+                                    }
+                                }
+                                
+                                if (isClusterPart) {
+                                    // Usamos un naranja fuerte para que destaque sobre otros estilos si coinciden (raro)
+                                    style = " bg-orange-100 text-orange-900 border-b-2 border-orange-300 font-medium"; 
+                                    title = "Cluster de Adjetivos";
+                                }
+
+                                return <span key={i} className={style} title={title}>{w}</span>;
                             })}
                         </p>
                     ))}
@@ -454,8 +566,7 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
-    // 10. DETALLE: MAPA SENSORIAL (TIMELINE HORIZONTAL)
+    // 10. DETALLE: MAPA SENSORIAL (TIMELINES SEPARADOS)
     if (viewMode === 'detail-senses') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
@@ -463,43 +574,44 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Eye className="text-teal-500" /> Mapa Sensorial</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                
-                <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2"><Activity size={16}/> Flujo Sensorial (Línea de Tiempo)</h3>
+
+                {/* TIMELINES SEPARADOS */}
+                <div className="mb-8 p-6 bg-teal-50 rounded-xl border border-teal-100">
+                    <h3 className="text-sm font-bold text-teal-900 mb-6 flex items-center gap-2">Evolución por Sentido</h3>
                     <div className="space-y-4">
                         {/* VISTA */}
                         <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-blue-500 w-12 text-right uppercase">Vista</span>
-                            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">
+                            <span className="text-xs font-bold text-blue-600 w-16 text-right uppercase flex items-center justify-end gap-1"><Eye size={12}/> Vista</span>
+                            <div className="flex-1 h-4 bg-white rounded-full overflow-hidden flex border border-blue-100">
                                 {analysis.sensoryTimeline.map((s, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${s.sight > 0 ? 'bg-blue-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Vista (${s.sight})`}/>
+                                    <div key={i} className={`flex-1 h-full ${s.sight > 0 ? 'bg-blue-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Vista`}/>
                                 ))}
                             </div>
                         </div>
                         {/* OIDO */}
                         <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-green-500 w-12 text-right uppercase">Oído</span>
-                            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">
+                            <span className="text-xs font-bold text-green-600 w-16 text-right uppercase flex items-center justify-end gap-1"><Ear size={12}/> Oído</span>
+                            <div className="flex-1 h-4 bg-white rounded-full overflow-hidden flex border border-green-100">
                                 {analysis.sensoryTimeline.map((s, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${s.sound > 0 ? 'bg-green-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Oído (${s.sound})`}/>
+                                    <div key={i} className={`flex-1 h-full ${s.sound > 0 ? 'bg-green-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Oído`}/>
                                 ))}
                             </div>
                         </div>
                         {/* TACTO */}
                         <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-orange-500 w-12 text-right uppercase">Tacto</span>
-                            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">
+                            <span className="text-xs font-bold text-orange-600 w-16 text-right uppercase flex items-center justify-end gap-1"><Fingerprint size={12}/> Tacto</span>
+                            <div className="flex-1 h-4 bg-white rounded-full overflow-hidden flex border border-orange-100">
                                 {analysis.sensoryTimeline.map((s, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${s.touch > 0 ? 'bg-orange-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Tacto (${s.touch})`}/>
+                                    <div key={i} className={`flex-1 h-full ${s.touch > 0 ? 'bg-orange-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Tacto`}/>
                                 ))}
                             </div>
                         </div>
-                        {/* GUSTO/OLFATO */}
+                        {/* OLFATO */}
                         <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-pink-500 w-12 text-right uppercase">Olfato</span>
-                            <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden flex">
+                            <span className="text-xs font-bold text-pink-600 w-16 text-right uppercase flex items-center justify-end gap-1"><Utensils size={12}/> Olfato</span>
+                            <div className="flex-1 h-4 bg-white rounded-full overflow-hidden flex border border-pink-100">
                                 {analysis.sensoryTimeline.map((s, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${s.smell_taste > 0 ? 'bg-pink-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Gusto/Olfato (${s.smell_taste})`}/>
+                                    <div key={i} className={`flex-1 h-full ${s.smell_taste > 0 ? 'bg-pink-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Olfato`}/>
                                 ))}
                             </div>
                         </div>
@@ -524,143 +636,97 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
-    // 11. DETALLE: CACOFONÍAS (CORREGIDO V3.5 - DOBLE RESALTADO)
+    // 11. DETALLE: CACOFONÍAS (TIMELINES SEPARADOS)
     if (viewMode === 'detail-cacophony') {
-        
-        // PRE-CALCULO DE PAREJAS PROBLEMÁTICAS PARA EL TEXTO
-        const shockIndices = new Set();
-        const echoIndices = new Set();
-        const echoPartners = {}; // Map para tooltips
-        const shockPartners = {};
-
-        const allWords = analysis.rawText.split(/\s+/); // Tokenización básica para índices globales
-        // NOTA: Esto es una aproximación para la vista. La lógica real idealmente debería ser más robusta con índices de caracteres.
-        // Para esta versión, usaremos una lógica de paso por párrafo que es más segura visualmente.
-
-        // DATOS PARA EL GRÁFICO
-        const soundTimelineData = analysis.rawText.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s)).map((sent, i) => {
-            const words = sent.toLowerCase().replace(/[.,;:!?()"«»]/g, "").split(/\s+/).filter(w => w.length > 0);
-            let hasShock = false;
-            let hasEcho = false;
-            words.forEach((w, idx) => {
-                if (idx < words.length - 1) {
-                    const next = words[idx+1];
-                    if (w.length >= 3 && next.length >= 3 && w.slice(-2) === next.slice(0,2)) hasShock = true;
-                }
-                if (w.length > 4) {
-                    const suffix = w.slice(-3);
-                    for(let k=1; k<=3; k++) {
-                        if(idx+k < words.length && words[idx+k].endsWith(suffix) && words[idx+k] !== w) hasEcho = true;
-                    }
-                }
-            });
-            return { id: i+1, val: (hasShock || hasEcho) ? 1 : 0.1, hasShock, hasEcho, text: sent };
+        const soundData = analysis.sentenceLengths.map((_, i) => {
+             const sentenceText = analysis.rawText.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s))[i] || "";
+             const words = sentenceText.toLowerCase().replace(/[.,;:!?()"«»]/g, "").split(/\s+/);
+             let hasShock = false;
+             let hasEcho = false;
+             words.forEach((w, idx) => {
+                 if (idx < words.length - 1) {
+                     const next = words[idx+1];
+                     if (w.length >= 3 && next.length >= 3 && w.slice(-2) === next.slice(0,2)) hasShock = true;
+                 }
+                 if (w.length > 4) {
+                     const suffix = w.slice(-3);
+                     for(let k=1; k<=3; k++) {
+                         if(idx+k < words.length && words[idx+k].endsWith(suffix) && words[idx+k] !== w) hasEcho = true;
+                     }
+                 }
+             });
+             return { id: i+1, hasShock, hasEcho };
         });
 
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Music className="text-red-500" /> Escáner Sonoro: Cacofonías y Ecos</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Music className="text-red-500" /> Escáner Sonoro</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                
-                <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2"><Activity size={16}/> Distribución Sonora (Pasa el ratón)</h3>
-                    <div className="h-24 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={soundTimelineData}>
-                                <XAxis dataKey="id" hide />
-                                <Tooltip 
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            const d = payload[0].payload;
-                                            const type = d.hasShock ? 'CHOQUE (Final/Inicio igual)' : d.hasEcho ? 'ECO (Rima interna)' : 'Limpio';
-                                            return (
-                                                <div className="bg-slate-800 text-white p-2 text-xs rounded shadow max-w-xs">
-                                                    <strong>Frase {d.id}: {type}</strong>
-                                                    <p className="mt-1 italic opacity-80">{d.text.substring(0, 50)}...</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                    cursor={{fill: 'transparent'}} 
-                                />
-                                <Bar dataKey="val" radius={[2, 2, 0, 0]}>
-                                    {soundTimelineData.map((entry, index) => {
-                                        let color = "#e5e7eb"; // Gris
-                                        if (entry.hasEcho) color = "#fb923c"; // Naranja
-                                        if (entry.hasShock) color = "#f87171"; // Rojo
-                                        return <Cell key={`cell-${index}`} fill={color} height={entry.hasShock || entry.hasEcho ? 40 : 10} />;
-                                    })}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                    <div className="flex gap-6 mt-2 text-xs text-gray-500 justify-center">
-                        <div className="flex items-center gap-1"><div className="w-3 h-3 bg-red-400 rounded"/> Choque (placa caerá)</div>
-                        <div className="flex items-center gap-1"><div className="w-3 h-3 bg-orange-400 rounded"/> Eco (rima interna)</div>
+
+                {/* TIMELINES SEPARADOS */}
+                <div className="mb-8 p-6 bg-red-50 rounded-xl border border-red-100">
+                    <h3 className="text-sm font-bold text-red-900 mb-4 flex items-center gap-2">Mapa de Incidentes Sonoros</h3>
+                    <div className="space-y-4">
+                        {/* CHOQUE */}
+                        <div className="flex items-center gap-4">
+                            <span className="text-xs font-bold text-red-600 w-24 text-right uppercase">Choques</span>
+                            <div className="flex-1 h-4 bg-white rounded-full overflow-hidden flex border border-red-100">
+                                {soundData.map((entry, index) => (
+                                    <div key={index} className={`flex-1 h-full ${entry.hasShock ? 'bg-red-500' : 'bg-transparent'}`} title={`Frase ${index+1}: Choque`}/>
+                                ))}
+                            </div>
+                        </div>
+                        {/* ECO */}
+                        <div className="flex items-center gap-4">
+                            <span className="text-xs font-bold text-orange-600 w-24 text-right uppercase">Rimas</span>
+                            <div className="flex-1 h-4 bg-white rounded-full overflow-hidden flex border border-orange-100">
+                                {soundData.map((entry, index) => (
+                                    <div key={index} className={`flex-1 h-full ${entry.hasEcho ? 'bg-orange-500' : 'bg-transparent'}`} title={`Frase ${index+1}: Rima interna`}/>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
                     {paragraphs.map((para, pIdx) => (
                         <p key={pIdx} className="mb-6">
-                            {/* LÓGICA DE RESALTADO DOBLE: Marcamos AMBOS ELEMENTOS de la pareja */}
                             {para.split(/(\s+)/).map((w, i, arr) => {
                                 if (!w.trim()) return <span key={i}>{w}</span>;
-                                
                                 const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, "");
                                 let style = "";
-                                let title = "";
-
-                                // 1. DETECCIÓN DE CHOQUE (Miramos atrás y adelante para marcar ambos)
-                                // Soy el primero de la pareja?
                                 if (i < arr.length - 2) {
                                     const nextWord = arr[i+2].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                    if (clean.length >= 3 && nextWord.length >= 3 && clean.slice(-2) === nextWord.slice(0,2)) {
-                                        style = "bg-red-100 text-red-800 border-b-2 border-red-400 font-bold cursor-help";
-                                        title = `Choque con: "${nextWord}"`;
-                                    }
+                                    if (clean.length >= 3 && nextWord.length >= 3 && clean.slice(-2) === nextWord.slice(0,2)) style = "bg-red-100 text-red-800 border-b-2 border-red-400 font-bold cursor-help";
                                 }
-                                // Soy el segundo de la pareja? (Miramos atrás)
                                 if (i >= 2) {
                                     const prevWord = arr[i-2].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                    if (prevWord.length >= 3 && clean.length >= 3 && prevWord.slice(-2) === clean.slice(0,2)) {
-                                        style = "bg-red-100 text-red-800 border-b-2 border-red-400 font-bold cursor-help";
-                                        title = `Choque con: "${prevWord}"`;
-                                    }
+                                    if (prevWord.length >= 3 && clean.length >= 3 && prevWord.slice(-2) === clean.slice(0,2)) style = "bg-red-100 text-red-800 border-b-2 border-red-400 font-bold cursor-help";
                                 }
-
-                                // 2. DETECCIÓN DE ECO (Si no es choque, miramos eco)
+                                // Rima interna (Eco)
                                 if (!style && clean.length > 4) {
-                                    const suffix = clean.slice(-3);
-                                    // Miramos adelante
-                                    let matchWord = null;
-                                    for(let k=1; k<=3; k++) {
-                                        let lookAheadIdx = i + (k * 2);
-                                        if (lookAheadIdx < arr.length) {
-                                            const target = arr[lookAheadIdx].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                            if (target.endsWith(suffix) && target !== clean) matchWord = target;
-                                        }
-                                    }
-                                    // Miramos atrás
-                                    for(let k=1; k<=3; k++) {
-                                        let lookBackIdx = i - (k * 2);
-                                        if (lookBackIdx >= 0) {
-                                            const target = arr[lookBackIdx].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                            if (target.endsWith(suffix) && target !== clean) matchWord = target;
-                                        }
-                                    }
-
-                                    if (matchWord) {
-                                        style = "bg-orange-100 text-orange-800 border-b-2 border-orange-300 decoration-orange-500 underline decoration-dotted cursor-help";
-                                        title = `Rima con: "${matchWord}"`;
-                                    }
+                                     const suffix = clean.slice(-3);
+                                     let hasEcho = false;
+                                     for(let k=1; k<=3; k++) {
+                                         let idx2 = i + (k*2);
+                                         if(idx2 < arr.length) {
+                                             const target = arr[idx2].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
+                                             if(target.endsWith(suffix) && target !== clean) hasEcho = true;
+                                         }
+                                     }
+                                     for(let k=1; k<=3; k++) {
+                                         let idx2 = i - (k*2);
+                                         if(idx2 >= 0) {
+                                             const target = arr[idx2].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
+                                             if(target.endsWith(suffix) && target !== clean) hasEcho = true;
+                                         }
+                                     }
+                                     if(hasEcho) style = "bg-orange-100 text-orange-800 border-b-2 border-orange-300 decoration-orange-500 underline decoration-dotted";
                                 }
-                                
-                                return <span key={i} className={style} title={title}>{w}</span>;
+
+                                return <span key={i} className={style}>{w}</span>;
                             })}
                         </p>
                     ))}
@@ -668,34 +734,91 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
-    // 12. DETALLE: REPETICIONES
+    // 12. DETALLE: REPETICIONES CERCANAS (CAMBIADO DE NOMBRE Y LÓGICA)
     if (viewMode === 'detail-repetitions') {
+        // Crear datos para gráfico de densidad de repeticiones cercanas
+        // Agrupamos por tramos del 10% del texto
+        const densityData = Array(10).fill(0).map((_, i) => ({ x: i, count: 0 }));
+        const totalWords = analysis.wordCount;
+        
+        [...analysis.closeRepetitionIndices].forEach(idx => {
+            const bucket = Math.floor((idx / totalWords) * 10);
+            if (bucket >= 0 && bucket < 10) densityData[bucket].count++;
+        });
+
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Repeat className="text-blue-500" /> Repeticiones Léxicas</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Repeat className="text-blue-500" /> Repeticiones Cercanas</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
+                
                 <div className="flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-1/3 bg-blue-50 p-5 rounded-xl h-fit border border-blue-100">
-                        <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2"><List size={16}/> Palabras más usadas</h3>
-                        <div className="space-y-2">
-                            {analysis.repetitions.slice(0, 10).map(([word, count]) => (
-                                <div key={word} className="flex justify-between items-center bg-white p-2 rounded border border-blue-100">
-                                    <span className="text-gray-700 font-medium capitalize">{word}</span>
-                                    <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">{count}</span>
-                                </div>
-                            ))}
+                     {/* COLUMNA IZQUIERDA: DATOS */}
+                     <div className="w-full md:w-1/3 space-y-6">
+                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                             <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2 text-sm"><List size={16}/> Top 10 Frecuentes</h3>
+                             <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden max-h-60 overflow-y-auto">
+                                <table className="min-w-full text-sm text-left text-gray-500">
+                                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b sticky top-0">
+                                        <tr>
+                                            <th className="px-4 py-2">Palabra</th>
+                                            <th className="px-4 py-2 text-right">Rep.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {analysis.repetitions.slice(0, 10).map(([word, count], idx) => (
+                                            <tr key={idx} className="hover:bg-gray-50">
+                                                <td className="px-4 py-2 font-medium text-gray-900 capitalize">{word}</td>
+                                                <td className="px-4 py-2 text-right font-bold text-blue-600">{count}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                             </div>
                         </div>
-                    </div>
+                        
+                        {/* GRÁFICO DE DENSIDAD */}
+                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Densidad de Repeticiones</h3>
+                            <div className="h-24 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={densityData}>
+                                        <defs>
+                                            <linearGradient id="colorRep" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <Tooltip cursor={{stroke: '#3b82f6'}} content={<CustomBarTooltip unit="repeticiones" label="Tramo" />}/>
+                                        <Area type="monotone" dataKey="count" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRep)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                     </div>
+
+                    {/* TEXTO RESALTADO */}
                     <div className="w-full md:w-2/3 prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
                         {paragraphs.map((para, pIdx) => (
                             <p key={pIdx} className="mb-6">
                                 {para.split(/(\s+)/).map((w, i) => {
+                                    // Calcular el índice global aproximado de la palabra para cruzar con closeRepetitionIndices
+                                    // Esta es una aproximación visual; en una app real usaríamos un mapeo exacto de tokens.
+                                    // Aquí simplemente resaltamos si la palabra es una de las "frecuentes" Y está cerca de otra.
+                                    // Para simplificar en esta vista estática: usamos el análisis previo.
+                                    
                                     const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                    const isRepeated = analysis.repetitions.slice(0, 5).some(r => r[0] === clean) && !STOPWORDS.has(clean);
-                                    return <span key={i} className={isRepeated ? "bg-blue-100 text-blue-900 border-b border-blue-300" : ""}>{w} </span>;
+                                    // Simulamos índice para buscar en el Set (esto requeriría pasar el índice exacto desde el render, 
+                                    // pero para efectos visuales, si la palabra está en las repeticiones, la marcamos).
+                                    // MEJORA: Usar un contador global si fuera necesario, pero aquí marcaremos las del TOP 10 para simplicidad visual robusta
+                                    // O MEJOR: Si textAnalyzer devolvió índices, los usamos. Pero como el renderizado de React divide por párrafos y espacios,
+                                    // perderíamos el índice exacto absoluto fácilmente.
+                                    // FALLBACK ROBUSTO: Marcar si es una palabra del TOP 10 que NO es stopword.
+                                    
+                                    const isTopRep = analysis.repetitions.slice(0, 10).some(r => r[0] === clean) && !STOPWORDS.has(clean);
+                                    
+                                    return <span key={i} className={isTopRep ? "bg-blue-100 text-blue-900 border-b border-blue-300 font-medium cursor-help" : ""} title={isTopRep ? "Repetición frecuente" : ""}>{w} </span>;
                                 })}
                             </p>
                         ))}
@@ -704,17 +827,13 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-
-    // 13. DETALLE: INICIOS REPETITIVOS
+    // 13. DETALLE: ANÁFORAS
     if (viewMode === 'detail-anaphora') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><RefreshCcw className="text-teal-500" /> Inicios Repetitivos (Anáforas)</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><RefreshCcw className="text-teal-500" /> Inicios Repetitivos</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
-                </div>
-                <div className="bg-teal-50 p-4 rounded-lg border border-teal-200 mb-6">
-                    <p className="text-sm text-teal-800">Se han detectado <strong>{analysis.anaphoraAlerts.length}</strong> casos donde frases consecutivas empiezan con la misma palabra.</p>
                 </div>
                 <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
                     {paragraphs.map((para, pIdx) => {
@@ -734,6 +853,241 @@ export default function StyleOptimizer() {
                         )
                     })}
                 </div>
+            </div>
+        );
+    }
+    // 14. DETALLE: FRASES PEGAJOSAS (CORREGIDO TIMELINE Y RESALTADO)
+    if (viewMode === 'detail-sticky') {
+        // Cálculo para el gráfico: Ratio de pegamento por frase
+        const stickyData = analysis.stickySentences.map(s => ({
+            id: s.index + 1,
+            ratio: s.glueRatio
+        }));
+        
+        // Usamos un contador global de frases para sincronizar con el texto
+        let sentenceCounter = 0;
+
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><StickyNote className="text-yellow-600" /> Frases Pegajosas (Grasa Textual)</h2>
+                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
+                </div>
+                
+                <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 mb-8">
+                    <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2"><Info size={20}/> ¿Qué es una frase pegajosa?</h3>
+                    <p className="text-sm text-yellow-700 mb-4">Son oraciones con <strong>más del 45%</strong> de palabras funcionales. Entorpecen la lectura.</p>
+                    
+                    {/* Timeline gráfico simple */}
+                    <div className="h-24 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={stickyData}>
+                                <XAxis dataKey="id" hide />
+                                <Tooltip content={<CustomBarTooltip unit="%" label="Pegamento" />} cursor={{stroke: '#eab308'}} />
+                                <Area type="monotone" dataKey="ratio" stroke="#ca8a04" fill="#fde047" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
+                    {paragraphs.map((para, pIdx) => {
+                       if (!para.trim()) return null;
+                       const sentences = para.split(/([.!?]+)/);
+                       const renderedSentences = [];
+                       let buffer = "";
+                       
+                       for (let i = 0; i < sentences.length; i++) {
+                           const part = sentences[i];
+                           buffer += part;
+                           // Si es delimitador o final, procesamos la frase
+                           if (/^[.!?]+$/.test(part) || i === sentences.length - 1) {
+                               if (buffer.trim().length > 0 && !/^[.!?]+$/.test(buffer)) {
+                                   // Verificamos si el índice actual coincide con una sticky sentence
+                                   const currentIdx = sentenceCounter; 
+                                   const isSticky = analysis.stickySentences.some(s => s.index === currentIdx);
+                                   
+                                   if (isSticky) {
+                                       const words = buffer.split(/(\s+|[.,;:!?])/);
+                                       const stickyContent = words.map((w, wIdx) => {
+                                            const clean = w.toLowerCase().replace(/[.,;:!?]/g, "");
+                                            if (STOPWORDS.has(clean)) {
+                                                return <span key={wIdx} className="font-bold text-yellow-800 bg-yellow-200/50 rounded px-0.5" title="Palabra pegamento">{w}</span>
+                                            }
+                                            return <span key={wIdx} className="text-yellow-900">{w}</span>
+                                       });
+                                       renderedSentences.push(<span key={currentIdx} className="bg-yellow-100 border-b-2 border-yellow-400 rounded px-1 mx-1" title="Frase Pegajosa">{stickyContent}</span>);
+                                   } else {
+                                       renderedSentences.push(<span key={currentIdx}>{buffer}</span>);
+                                   }
+                                   sentenceCounter++; // Incrementamos el contador real de frases
+                               } else {
+                                   renderedSentences.push(<span key={`punct-${i}`}>{buffer}</span>);
+                               }
+                               buffer = "";
+                           }
+                       }
+                       return <p key={pIdx} className="mb-4">{renderedSentences}</p>;
+                   })}
+                </div>
+            </div>
+        );
+    }
+    // 15. DETALLE: PLEONASMOS
+    if (viewMode === 'detail-pleonasms') {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Trash2 className="text-red-500" /> Detector de Pleonasmos</h2>
+                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
+                </div>
+                
+                {/* EDUCATIONAL HEADER */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div className="bg-red-50 p-5 rounded-xl border border-red-100">
+                        <h3 className="font-bold text-red-900 mb-2 flex items-center gap-2"><Info size={16}/> ¿Qué es un Pleonasmo?</h3>
+                        <p className="text-sm text-red-800 leading-relaxed">
+                            Es una figura retórica que consiste en añadir palabras innecesarias para la comprensión del mensaje. 
+                            Aunque a veces se usa para dar fuerza ("lo vi con mis propios ojos"), en textos técnicos o narrativos limpios suele considerarse un vicio (pobreza léxica).
+                        </p>
+                    </div>
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <h3 className="font-bold text-gray-700 text-sm mb-3 uppercase tracking-wider text-center">Ejemplo Esquático</h3>
+                        <div className="flex items-center justify-center gap-6">
+                            <div className="flex flex-col items-center">
+                                <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold mb-1 line-through decoration-red-400">Subir arriba</span>
+                                <XCircle size={20} className="text-red-400"/>
+                            </div>
+                            <ArrowRight className="text-gray-300"/>
+                            <div className="flex flex-col items-center">
+                                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold mb-1">Subir</span>
+                                <CheckCircle2 size={20} className="text-green-500"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {analysis.pleonasmsFound.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400 border-t border-gray-50 pt-12">
+                        <Feather size={48} className="mx-auto mb-4 opacity-20"/>
+                        <p className="text-xl">¡Texto limpio! No se han detectado redundancias obvias.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        <div className="bg-white p-2 border-b border-gray-100 text-gray-400 text-sm font-bold uppercase mb-2">
+                            Redundancias detectadas en tu texto ({analysis.pleonasmsFound.length})
+                        </div>
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {analysis.pleonasmsFound.map((p, i) => (
+                                <li key={i} className="flex items-center justify-between p-4 bg-white border border-gray-100 shadow-sm rounded-lg hover:border-red-200 transition group">
+                                    <span className="font-bold text-gray-700 capitalize group-hover:text-red-600 transition-colors">"{p}"</span>
+                                    <span className="text-[10px] font-mono text-red-500 bg-red-50 px-2 py-1 rounded border border-red-100 uppercase font-bold">Corregir</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        );
+    }
+    // 16. DETALLE: VARIADAD DE INICIO (AÑADIDO GRÁFICO LINEAL)
+    if (viewMode === 'detail-starts') {
+        const data = Object.entries(analysis.sentenceStarts).map(([name, value]) => ({ name, value }));
+        const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F', '#FFBB28'];
+        const TYPE_COLORS = {
+            "Artículo": '#8884d8', "Preposición": '#82ca9d', "Pronombre": '#ffc658', 
+            "Gerundio": '#ff8042', "Conector": '#00C49F', "Sujeto/Otro": '#FFBB28'
+        };
+
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><PieChart className="text-blue-500" /> Variedad de Inicio de Oración</h2>
+                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
+                </div>
+                
+                {/* CHART AREA */}
+                <div className="flex flex-col md:flex-row items-center justify-center gap-12 mb-10">
+                    <div className="w-full md:w-1/2 h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RePie>
+                                <Pie data={data} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value" label={({ name, percent }) => percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ''}>
+                                    {data.map((entry, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
+                                </Pie>
+                                <Tooltip />
+                            </RePie>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="w-full md:w-1/2 space-y-4">
+                        <h3 className="font-bold text-gray-700 mb-2">Análisis de Estructura</h3>
+                        <p className="text-gray-600 text-sm">Un estilo variado alterna el sujeto, complementos circunstanciales y conectores.</p>
+                        <ul className="text-sm space-y-2">
+                            {data.map((item, idx) => (
+                                <li key={idx} className="flex justify-between border-b border-gray-100 pb-1">
+                                    <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[idx % COLORS.length]}}></div> {item.name}</span> 
+                                    <span className="font-bold">{item.value}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+
+                {/* TIMELINE LINEAL AÑADIDO */}
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+                    <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">Distribución Secuencial (Frase a Frase)</h3>
+                    <div className="h-8 w-full flex rounded-lg overflow-hidden">
+                        {analysis.sentenceStartTimeline.map((item, i) => (
+                            <div 
+                                key={i} 
+                                className="flex-1 h-full border-r border-white/20 hover:opacity-80 transition-opacity relative group" 
+                                style={{backgroundColor: TYPE_COLORS[item.type] || '#ccc'}}
+                            >
+                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-800 text-white text-xs p-1 rounded whitespace-nowrap z-10">
+                                    Frase {i+1}: {item.type}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-1 font-mono">
+                        <span>Inicio</span>
+                        <span>Final del Texto</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    // 17. DETALLE: FUERZA VERBAL
+    if (viewMode === 'detail-weakverbs') {
+        return (
+            <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Zap className="text-purple-600" /> Fuerza Verbal</h2>
+                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
+                </div>
+                {analysis.weakAdverbs.length === 0 ? (
+                    <div className="text-center py-20 text-gray-400">
+                        <Zap size={48} className="mx-auto mb-4 opacity-20"/>
+                        <p className="text-xl">¡Excelente! Tus verbos parecen fuertes y directos.</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-6">
+                        <div className="bg-purple-50 p-6 rounded-xl border border-purple-100">
+                            <h3 className="font-bold text-purple-900 mb-2">Construcciones Débiles Detectadas</h3>
+                            <p className="text-sm text-purple-700 mb-4">El uso de "Verbo + Adverbio" suele indicar un verbo débil. Intenta reemplazar la pareja entera por un verbo más potente.</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {analysis.weakAdverbs.map((pair, i) => (
+                                    <div key={i} className="flex flex-col bg-white p-4 rounded shadow-sm border border-purple-100">
+                                        <span className="text-xs text-gray-400 font-bold uppercase mb-1">Detectado</span>
+                                        <span className="text-red-500 font-medium line-through decoration-red-300">{pair}</span>
+                                        <div className="mt-2 pt-2 border-t border-gray-50 flex items-center gap-2 text-green-600 text-sm">
+                                            <ArrowRight size={14}/> <span>¿Verbo más fuerte?</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -895,29 +1249,6 @@ export default function StyleOptimizer() {
                              <ComparisonCard title="Show vs Tell" label="Filtros mentales" valOld={Number(analysisV1.perceptionRatio)} valNew={Number(analysisV2.perceptionRatio)} inverse={true} suffix="%" />
                             <ComparisonCard title="Longitud Media" label="Palabras/Frase" valOld={Number(analysisV1.avgSentenceLength)} valNew={Number(analysisV2.avgSentenceLength)} inverse={false} />
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-800 mb-8">
-                             <ComparisonCard title="Diálogo" label="vs Narrativa" valOld={analysisV1.dialogueRatio} valNew={analysisV2.dialogueRatio} inverse={false} suffix="%" />
-                            <ComparisonCard title="Legibilidad" label="Escala F. Huerta" valOld={analysisV1.readabilityScore} valNew={analysisV2.readabilityScore} inverse={false} />
-                            <ComparisonCard title="Voz Pasiva" label="Casos detectados" valOld={analysisV1.passiveCount} valNew={analysisV2.passiveCount} inverse={true} />
-                        </div>
-                        
-                        <div className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10">
-                            <h3 className="font-bold text-indigo-100 mb-4 flex items-center gap-2"><Activity size={18}/> Ritmo Comparado (Primeras 30 frases)</h3>
-                            <div className="h-64 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={[...analysisV1.sentenceLengths.map((len, i) => ({ name: i+1, Original: len, Corregido: analysisV2.sentenceLengths[i] || 0 })).slice(0, 30)]}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                                        <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-                                        <YAxis stroke="rgba(255,255,255,0.5)" />
-                                        <Tooltip contentStyle={{ backgroundColor: '#1e1b4b', border: 'none', borderRadius: '8px', color: 'white' }} itemStyle={{ color: '#e0e7ff' }} />
-                                        <Legend wrapperStyle={{ paddingTop: '10px' }}/>
-                                        <Bar dataKey="Original" fill="rgba(255,255,255,0.3)" radius={[4, 4, 0, 0]} /> 
-                                        <Bar dataKey="Corregido" fill="#818cf8" radius={[4, 4, 0, 0]} /> 
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}
@@ -933,9 +1264,8 @@ export default function StyleOptimizer() {
 
             {/* SECCIÓN 2: RITMO */}
             <section className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2 border-gray-200"><Activity className="text-indigo-500"/> RITMO</h3>
+                <SectionHeader icon={<Activity className="text-indigo-500" size={28} />} title="Ritmo" colorClass="text-indigo-800 border-indigo-200" />
                 
-                {/* SISMÓGRAFO FULL WIDTH - RECHARTS REAL */}
                 <div className="w-full">
                     <DashboardCard title="Sismógrafo de Frases" icon={<Activity className="text-indigo-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-sismografo')}>
                         <div className="mb-2 flex gap-2">
@@ -944,27 +1274,25 @@ export default function StyleOptimizer() {
                             <Badge color="gray" text="Monotonía" />
                         </div>
                         <div className="h-32 w-full">
-                            {/* [FIX] Usamos ResponsiveContainer y BarChart en lugar de divs manuales */}
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart 
                                     data={(mode === 'compare' ? analysisV2 : analysisV1).sentenceLengths.map((len, i) => {
                                         const currentData = mode === 'compare' ? analysisV2 : analysisV1;
                                         const alert = currentData.sismografoAlerts.find(a => i >= a.start && i <= a.end);
-                                        let color = "#818cf8"; // Indigo default
+                                        let color = "#818cf8"; 
                                         let alertType = "";
                                         if (alert) {
-                                            if (alert.type === 'staccato') { color = "#60a5fa"; alertType = "Staccato"; } // Blue
-                                            if (alert.type === 'wall') { color = "#f87171"; alertType = "Muro"; } // Red
-                                            if (alert.type === 'flat') { color = "#9ca3af"; alertType = "Monotonía"; } // Gray
+                                            if (alert.type === 'staccato') { color = "#60a5fa"; alertType = "Staccato"; } 
+                                            if (alert.type === 'wall') { color = "#f87171"; alertType = "Muro"; } 
+                                            if (alert.type === 'flat') { color = "#9ca3af"; alertType = "Monotonía"; } 
                                         } else if (len < 8) {
-                                            color = "#93c5fd"; // Light blue for short sentences
+                                            color = "#93c5fd"; 
                                         }
                                         return { id: i+1, len, color, alert: alertType };
                                     })}
                                 >
                                     <Tooltip content={<CustomBarTooltip unit="palabras" />} cursor={{fill: 'transparent'}} />
                                     <Bar dataKey="len" radius={[2, 2, 0, 0]}>
-                                        {/* Mapeo de celdas para colores individuales */}
                                         {(mode === 'compare' ? analysisV2 : analysisV1).sentenceLengths.map((_, index) => {
                                              const currentData = mode === 'compare' ? analysisV2 : analysisV1;
                                              const alert = currentData.sismografoAlerts.find(a => index >= a.start && index <= a.end);
@@ -983,9 +1311,7 @@ export default function StyleOptimizer() {
                     </DashboardCard>
                 </div>
 
-                {/* ESCÁNER PROSÓDICO + PUNTUACIÓN + LEGIBILIDAD */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                     {/* ESCÁNER PROSÓDICO */}
                      <DashboardCard title="Escáner Prosódico" icon={<Mic2 className="text-pink-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-prosody')}>
                         <div className="text-center py-4 flex flex-col justify-center h-full">
                             <p className="text-xs text-gray-400 mb-3">Detecta la "música" del texto:</p>
@@ -1001,27 +1327,97 @@ export default function StyleOptimizer() {
                 </div>
             </section>
 
-            {/* SECCIÓN 3: ESTILO */}
+             {/* SECCIÓN 3: HIGIENE Y SINTAXIS (VOZ PASIVA MOVIDA AQUÍ) */}
+             <section className="space-y-6">
+                <SectionHeader icon={<Trash2 className="text-red-500" size={28} />} title="Higiene y Sintaxis" colorClass="text-red-800 border-red-200" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <DashboardCard title="Frases Pegajosas" icon={<StickyNote className="text-yellow-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-sticky')}>
+                         <div className="text-center py-2"><span className="text-3xl font-bold text-yellow-600">{(mode === 'compare' ? analysisV2 : analysisV1).stickySentences.length}</span><p className="text-xs text-gray-400">exceso de "glue words"</p></div>
+                    </DashboardCard>
+
+                    <DashboardCard title="Pleonasmos" icon={<Trash2 className="text-red-500 w-5 h-5" />} onViewDetail={() => setViewMode('detail-pleonasms')}>
+                        <div className="text-center py-2"><span className="text-3xl font-bold text-red-500">{(mode === 'compare' ? analysisV2 : analysisV1).pleonasmsFound.length}</span><p className="text-xs text-gray-400">redundancias</p></div>
+                    </DashboardCard>
+
+                    {/* VOZ PASIVA - AHORA CON PIE CHART EN DASHBOARD */}
+                    <DashboardCard title="Voz Pasiva" icon={<UserX className="text-gray-500 w-5 h-5" />} onViewDetail={() => setViewMode('detail-passive')}>
+                        <div className="h-24 w-full flex justify-center items-center relative">
+                             <ResponsiveContainer width="100%" height="100%">
+                                <RePie>
+                                    <Pie
+                                        data={[
+                                            { name: 'Activa', value: (mode === 'compare' ? analysisV2 : analysisV1).sentenceCount - (mode === 'compare' ? analysisV2 : analysisV1).passiveCount },
+                                            { name: 'Pasiva', value: (mode === 'compare' ? analysisV2 : analysisV1).passiveCount }
+                                        ]}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={25}
+                                        outerRadius={35}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        isAnimationActive={false}
+                                    >
+                                        <Cell fill="#4ade80" />
+                                        <Cell fill="#94a3b8" />
+                                    </Pie>
+                                </RePie>
+                            </ResponsiveContainer>
+                            <span className="absolute text-[10px] font-bold text-gray-400 bottom-0 w-full text-center">Ver Detalle</span>
+                            <span className="absolute text-xl font-bold text-gray-600">{(mode === 'compare' ? analysisV2 : analysisV1).passiveCount}</span>
+                        </div>
+                    </DashboardCard>
+
+                    {/* INICIO DE FRASE */}
+                    <DashboardCard title="Inicio de Frase" icon={<PieChart className="text-blue-500 w-5 h-5" />} onViewDetail={() => setViewMode('detail-starts')}>
+                        <div className="h-24 w-full flex justify-center items-center relative">
+                             <ResponsiveContainer width="100%" height="100%">
+                                <RePie>
+                                    <Pie
+                                        data={Object.entries((mode === 'compare' ? analysisV2 : analysisV1).sentenceStarts).map(([name, value]) => ({ name, value }))}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={25}
+                                        outerRadius={35}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                        isAnimationActive={false}
+                                    >
+                                        {Object.entries((mode === 'compare' ? analysisV2 : analysisV1).sentenceStarts).map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F', '#FFBB28'][index % 6]} />
+                                        ))}
+                                    </Pie>
+                                </RePie>
+                            </ResponsiveContainer>
+                            <span className="absolute text-[10px] font-bold text-gray-400 bottom-0 w-full text-center">Ver Detalle</span>
+                        </div>
+                    </DashboardCard>
+                    
+                    <DashboardCard title="Fuerza Verbal" icon={<Zap className="text-purple-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-weakverbs')}>
+                        <div className="text-center py-2"><span className="text-3xl font-bold text-purple-600">{(mode === 'compare' ? analysisV2 : analysisV1).weakAdverbs.length}</span><p className="text-xs text-gray-400">verbos débiles</p></div>
+                    </DashboardCard>
+                </div>
+            </section>
+
+            {/* SECCIÓN 4: ESTILO */}
             <section className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2 border-gray-200"><Feather className="text-purple-500"/> ESTILO</h3>
+                <SectionHeader icon={<Feather className="text-purple-500" size={28} />} title="Estilo" colorClass="text-purple-800 border-purple-200" />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <DashboardCard title="Inicios Repetitivos" icon={<RefreshCcw className="text-teal-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-anaphora')}>
                         {(mode === 'compare' ? analysisV2 : analysisV1).anaphoraAlerts.length > 0 ? <div className="text-sm space-y-1">{(mode === 'compare' ? analysisV2 : analysisV1).anaphoraAlerts.slice(0,3).map((a,i)=><div key={i} className="flex justify-between p-2 bg-teal-50 rounded text-teal-800"><span className="font-medium italic">"{a.word}..."</span><span className="text-xs bg-white px-2 py-0.5 rounded font-bold">x{a.indices.length}</span></div>)}</div> : <p className="text-sm text-gray-400 italic">Sin anáforas detectadas.</p>}
                     </DashboardCard>
 
-                    <DashboardCard title="Repeticiones" icon={<Repeat className="text-blue-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-repetitions')}>
-                        <div className="space-y-1">
-                            {(mode === 'compare' ? analysisV2 : analysisV1).repetitions.length > 0 ? (mode === 'compare' ? analysisV2 : analysisV1).repetitions.slice(0, 3).map(([w, c]) => (
-                                <div key={w} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0"><span className="text-gray-700 capitalize">{w}</span><span className="bg-blue-100 text-blue-800 px-2 rounded-full text-xs font-bold">{c}</span></div>
-                            )) : <p className="text-sm text-gray-400">Limpio de repeticiones.</p>}
-                        </div>
+                    {/* REPETICIONES CERCANAS */}
+                    <DashboardCard title="Repeticiones Cercanas" icon={<Repeat className="text-blue-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-repetitions')}>
+                        <div className="text-center py-2"><span className="text-3xl font-bold text-blue-600">{(mode === 'compare' ? analysisV2 : analysisV1).repetitions.length}</span><p className="text-xs text-gray-400">palabras frecuentes</p></div>
                     </DashboardCard>
 
                     <DashboardCard title="Métricas de Estilo" icon={<Layers className="text-purple-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-metrics')}>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-purple-50 p-2 rounded text-center"><span className="block font-bold text-purple-700 text-lg">{(mode === 'compare' ? analysisV2 : analysisV1).rhymes.mente}</span><span className="text-[10px] text-purple-500 uppercase">-mente</span></div>
-                            <div className="bg-indigo-50 p-2 rounded text-center"><span className="block font-bold text-indigo-700 text-lg">{(mode === 'compare' ? analysisV2 : analysisV1).rhymes.cion}</span><span className="text-[10px] text-indigo-500 uppercase">-ción</span></div>
+                        <div className="grid grid-cols-3 gap-1 text-center">
+                            <div className="bg-purple-50 p-1.5 rounded"><span className="block font-bold text-purple-700 text-sm">{(mode === 'compare' ? analysisV2 : analysisV1).rhymes.mente}</span><span className="text-[8px] text-purple-500 uppercase">-mente</span></div>
+                            <div className="bg-indigo-50 p-1.5 rounded"><span className="block font-bold text-indigo-700 text-sm">{(mode === 'compare' ? analysisV2 : analysisV1).rhymes.cion}</span><span className="text-[8px] text-indigo-500 uppercase">-ción</span></div>
+                            <div className="bg-orange-50 p-1.5 rounded"><span className="block font-bold text-orange-700 text-sm">{(mode === 'compare' ? analysisV2 : analysisV1).adjectiveClusters}</span><span className="text-[8px] text-orange-500 uppercase">Adj+</span></div>
                         </div>
                     </DashboardCard>
 
@@ -1035,19 +1431,18 @@ export default function StyleOptimizer() {
                 </div>
             </section>
 
-            {/* SECCIÓN 4: NARRACIÓN */}
+            {/* SECCIÓN 5: NARRACIÓN */}
             <section className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2 border-gray-200"><BookOpen className="text-pink-500"/> NARRACIÓN</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <SectionHeader icon={<BookOpen className="text-pink-500" size={28} />} title="Narración" colorClass="text-pink-800 border-pink-200" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <MetricCard icon={<Eye />} label="Show vs Tell" value={`${(mode === 'compare' ? analysisV2 : analysisV1).perceptionRatio}%`} color="green" onClick={() => setViewMode('detail-showtell')} />
-                    <MetricCard icon={<UserX />} label="Voz Pasiva" value={(mode === 'compare' ? analysisV2 : analysisV1).passiveCount} color="gray" subtext="Casos detectados" onClick={() => setViewMode('detail-passive')} />
                     <MetricCard icon={<MessageSquare />} label="Diálogo" value={`${(mode === 'compare' ? analysisV2 : analysisV1).dialogueRatio}%`} color="blue" subtext="vs Narrativa" onClick={() => setViewMode('detail-dialogue')} />
                 </div>
             </section>
 
-            {/* SECCIÓN 5: SENSORIUM */}
+            {/* SECCIÓN 6: SENSORIUM */}
             <section className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2 border-gray-200"><Eye className="text-teal-500"/> SENSORIUM</h3>
+                <SectionHeader icon={<Eye className="text-teal-500" size={28} />} title="Sensorium" colorClass="text-teal-800 border-teal-200" />
                 <DashboardCard title="Mapa Sensorial" icon={<Eye className="text-teal-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-senses')}>
                     <div className="grid grid-cols-4 gap-2 text-center">
                         <div className="bg-blue-50 rounded p-2"><Eye size={16} className="mx-auto text-blue-500 mb-1"/><span className="text-sm font-bold text-blue-700">{(mode === 'compare' ? analysisV2 : analysisV1).sensoryCounts.sight}</span></div>

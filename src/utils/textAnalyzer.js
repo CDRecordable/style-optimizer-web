@@ -1,8 +1,23 @@
 // --- DICCIONARIOS Y CONSTANTES ---
 
 export const STOPWORDS = new Set([
-  "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "o", "pero", "que", "de", "del", "al", "en", "con", "por", "para", "si", "no", "es", "son", "a", "su", "sus", "mi", "mis", "tu", "tus", "se", "le", "les", "lo", "me", "te", "nos", "os", "esta", "este", "esto", "como", "cuando", "donde", "porque", "tan"
+  "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "o", "pero", "que", "de", "del", "al", "en", "con", "por", "para", "si", "no", "es", "son", "a", "su", "sus", "mi", "mis", "tu", "tus", "se", "le", "les", "lo", "me", "te", "nos", "os", "esta", "este", "esto", "como", "cuando", "donde", "porque", "tan", "muy", "más", "ese", "esa", "eso"
 ]);
+
+export const PREPOSITIONS = new Set(["a", "ante", "bajo", "cabe", "con", "contra", "de", "desde", "durante", "en", "entre", "hacia", "hasta", "mediante", "para", "por", "según", "sin", "so", "sobre", "tras", "versus", "via"]);
+export const ARTICLES = new Set(["el", "la", "los", "las", "un", "una", "unos", "unas"]);
+export const PRONOUNS = new Set(["yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "me", "te", "se", "nos", "os", "le", "les"]);
+export const CONNECTORS = new Set(["pero", "mas", "sino", "entonces", "luego", "pues", "aunque", "así", "además", "también", "tampoco"]);
+
+export const PLEONASMS_LIST = [
+    "subir arriba", "bajar abajo", "entrar dentro", "salir fuera", "cita previa", 
+    "hecho real", "persona humana", "círculo vicioso", "nexo de unión", "ver con los propios ojos",
+    "volar por los aires", "sorpresa inesperada", "regalo gratis", "prever con antelación",
+    "falso pretexto", "conclusión final", "divisas extranjeras", "experiencia pasada",
+    "hemorragia de sangre", "lapso de tiempo", "mendrugo de pan", "opinión personal",
+    "partitura musical", "peluca postiza", "puño cerrado", "réplica exacta",
+    "resumen breve", "testigo presencial", "tubo hueco", "vigente actualmente"
+];
 
 export const VERBOS_BAUL = new Set([
   "hacer", "hizo", "hace", "hecho", "haciendo", "hago", "haga",
@@ -100,12 +115,25 @@ export const analyzeText = (text) => {
     const wordCounts = {};
     const rhymes = { mente: 0, cion: 0, ado_ido: 0 };
     const baulWords = new Set();
+    const baulTimeline = []; 
     const cacophonies = [];
     let adjectiveClusters = 0;
     let perceptionCount = 0;
     let dialogueWordCount = 0;
     let passiveCount = 0;
     
+    // Nuevas Métricas
+    const stickySentences = []; 
+    const pleonasmsFound = []; 
+    const weakAdverbs = []; 
+    const sentenceStarts = { "Artículo": 0, "Preposición": 0, "Pronombre": 0, "Gerundio": 0, "Conector": 0, "Sujeto/Otro": 0 };
+    const sentenceStartTimeline = []; 
+    
+    // Repeticiones Cercanas
+    const closeRepetitionIndices = new Set();
+    const lastPositions = {}; // word -> index
+    const DISTANCE_THRESHOLD = 50; // Palabras de distancia para considerar "repetición cercana"
+
     const sensoryCounts = { sight: 0, sound: 0, touch: 0, smell_taste: 0 };
     let totalCommas = 0;
     let totalSyllables = 0;
@@ -128,6 +156,45 @@ export const analyzeText = (text) => {
         }
     });
 
+    // 1. Análisis de Frases (Sticky, Starts)
+    pureSentences.forEach((sentence, idx) => {
+        const words = sentence.trim().split(/\s+/);
+        if (words.length === 0) return;
+
+        // Sticky Analysis
+        let glueCount = 0;
+        const cleanWords = words.map(w => w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""));
+        cleanWords.forEach(w => {
+            if (STOPWORDS.has(w)) glueCount++;
+        });
+        const glueRatio = words.length > 3 ? (glueCount / words.length) : 0;
+        if (glueRatio > 0.45) {
+            stickySentences.push({ text: sentence, glueRatio: (glueRatio * 100).toFixed(0), index: idx });
+        }
+
+        // Sentence Starts Analysis
+        const firstWord = cleanWords[0];
+        let startType = "Sujeto/Otro";
+        if (firstWord) {
+            if (ARTICLES.has(firstWord)) startType = "Artículo";
+            else if (PREPOSITIONS.has(firstWord)) startType = "Preposición";
+            else if (PRONOUNS.has(firstWord)) startType = "Pronombre";
+            else if (CONNECTORS.has(firstWord)) startType = "Conector";
+            else if (firstWord.endsWith("ndo") && firstWord.length > 4) startType = "Gerundio";
+            
+            sentenceStarts[startType]++;
+            sentenceStartTimeline.push({ type: startType, index: idx });
+        }
+    });
+
+    // 2. Análisis de Pleonasmos
+    const normalizedText = text.toLowerCase();
+    PLEONASMS_LIST.forEach(pleonasm => {
+        if (normalizedText.includes(pleonasm)) {
+            pleonasmsFound.push(pleonasm);
+        }
+    });
+
     // Análisis palabra por palabra
     wordsRaw.forEach((word, index) => {
       const clean = word.toLowerCase().replace(/[.,;:!?()"«»—]/g, "");
@@ -136,12 +203,28 @@ export const analyzeText = (text) => {
       const prosody = getProsody(clean);
       if(prosody) totalSyllables += prosody.numSyllables;
 
-      if (!STOPWORDS.has(clean) && clean.length > 2) wordCounts[clean] = (wordCounts[clean] || 0) + 1;
+      if (!STOPWORDS.has(clean) && clean.length > 2) {
+          wordCounts[clean] = (wordCounts[clean] || 0) + 1;
+          
+          // Detección de Repeticiones Cercanas
+          if (lastPositions[clean] !== undefined) {
+              const dist = index - lastPositions[clean];
+              if (dist < DISTANCE_THRESHOLD) {
+                  closeRepetitionIndices.add(index);
+                  closeRepetitionIndices.add(lastPositions[clean]);
+              }
+          }
+          lastPositions[clean] = index;
+      }
+
       if (clean.endsWith("mente")) rhymes.mente++;
       if (clean.endsWith("ción") || clean.endsWith("cion")) rhymes.cion++;
       if (clean.endsWith("ado") || clean.endsWith("ido")) rhymes.ado_ido++;
       
-      if (PALABRAS_BAUL.has(clean)) baulWords.add(clean);
+      if (PALABRAS_BAUL.has(clean)) {
+          baulWords.add(clean);
+          baulTimeline.push({ word: clean, position: index / wordsRaw.length });
+      }
       if (VERBOS_PERCEPCION.has(clean)) perceptionCount++;
 
       // Pasiva
@@ -151,6 +234,14 @@ export const analyzeText = (text) => {
       if ((clean === 'fue' || clean === 'fueron' || clean === 'sido') && index < wordsRaw.length - 1) {
           const next = wordsRaw[index+1] ? wordsRaw[index+1].toLowerCase() : "";
           if (next.endsWith('ado') || next.endsWith('ido')) passiveCount++;
+      }
+
+      // Fuerza Verbal
+      if (clean.endsWith("mente") && clean.length > 5 && index > 0) {
+          const prevWord = wordsRaw[index - 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
+          if (!STOPWORDS.has(prevWord) && prevWord.length > 3) {
+              weakAdverbs.push(`${prevWord} ${clean}`);
+          }
       }
 
       // Cacofonías
@@ -317,11 +408,18 @@ export const analyzeText = (text) => {
       readabilityScore, 
       passiveCount, 
       baulWords: [...baulWords],
+      baulTimeline,
       cacophonies: [...new Set(cacophonies)],
       perceptionRatio,
       adjectiveClusters,
       rhythmAnalysis,
       rawText: text,
-      avgSentenceLength: pureSentences.length > 0 ? (wordsRaw.length / pureSentences.length).toFixed(1) : 0
+      avgSentenceLength: pureSentences.length > 0 ? (wordsRaw.length / pureSentences.length).toFixed(1) : 0,
+      stickySentences,
+      pleonasmsFound,
+      weakAdverbs,
+      sentenceStarts,
+      sentenceStartTimeline,
+      closeRepetitionIndices // Nuevo
     };
 };
