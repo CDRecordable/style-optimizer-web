@@ -3,7 +3,7 @@ import {
   BookOpen, Activity, Repeat, Mic2, AlertTriangle, Feather, Eye, Type, ArrowLeft,
   Music, Zap, Layers, Fingerprint, Ear, Utensils,
   PauseCircle, RefreshCcw, MessageSquare, Gauge, UserX, Printer, Globe, Youtube, 
-  Edit, Package, AlignJustify, Minus, List, ArrowRight, Clock, ArrowDown, Info, ExternalLink
+  Edit, Package, AlignJustify, Minus, List, ArrowRight, Clock, ArrowDown, Info
 } from 'lucide-react';
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, Cell } from 'recharts';
 
@@ -30,7 +30,7 @@ const CustomBarTooltip = ({ active, payload, label, unit }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-800 text-white text-xs p-2 rounded shadow-xl border border-slate-700">
+        <div className="bg-slate-800 text-white text-xs p-2 rounded shadow-xl border border-slate-700 z-50">
           <p className="font-bold text-slate-300 mb-1">Frase {label}</p>
           <p className="text-sm">
             <span className="font-bold text-white">{data.realValue || data.value || data.count || data.len}</span> {unit}
@@ -83,9 +83,8 @@ export default function StyleOptimizer() {
     if (!analysis) return null;
     const paragraphs = analysis.rawText.split(/\n+/);
     
-    // 1. DETALLE: ESCÁNER PROSÓDICO (TABLA VISUAL EXTENDIDA)
+    // 1. DETALLE: ESCÁNER PROSÓDICO
     if (viewMode === 'detail-prosody') {
-        // Preparar datos para las líneas temporales
         const rhythmTimeline = analysis.rhythmAnalysis.map(s => ({
             hasDactyl: s.highlights.some(h => h.type === 'Dactílico'),
             hasAmphibrach: s.highlights.some(h => h.type === 'Anfíbraco'),
@@ -98,63 +97,23 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Mic2 className="text-indigo-500" /> Escáner Prosódico</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-
-                {/* TABLA VISUAL (TIMELINE) */}
                 <div className="mb-10 p-6 bg-gray-50 rounded-xl border border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2"><Activity size={16}/> Partitura Rítmica (Evolución del texto)</h3>
-                    
+                    <h3 className="text-sm font-bold text-gray-700 mb-6 flex items-center gap-2"><Activity size={16}/> Partitura Rítmica (Evolución)</h3>
                     <div className="space-y-4">
-                        {/* Pista Dáctilo */}
-                        <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-indigo-600 w-16 text-right uppercase">Vals</span>
-                            <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                                {rhythmTimeline.map((r, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasDactyl ? 'bg-indigo-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Dactílico`}/>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Pista Anfíbraco */}
-                        <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-emerald-600 w-16 text-right uppercase">Narrativo</span>
-                            <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                                {rhythmTimeline.map((r, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasAmphibrach ? 'bg-emerald-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Anfíbraco`}/>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Pista Troqueo */}
-                        <div className="flex items-center gap-4">
-                            <span className="text-xs font-bold text-amber-600 w-16 text-right uppercase">Machacón</span>
-                            <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                                {rhythmTimeline.map((r, i) => (
-                                    <div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasTrochee ? 'bg-amber-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Trocaico`}/>
-                                ))}
-                            </div>
-                        </div>
+                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-indigo-600 w-16 text-right uppercase">Vals</span><div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">{rhythmTimeline.map((r, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasDactyl ? 'bg-indigo-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Dactílico`}/>))}</div></div>
+                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-emerald-600 w-16 text-right uppercase">Narrativo</span><div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">{rhythmTimeline.map((r, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasAmphibrach ? 'bg-emerald-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Anfíbraco`}/>))}</div></div>
+                        <div className="flex items-center gap-4"><span className="text-xs font-bold text-amber-600 w-16 text-right uppercase">Machacón</span><div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden flex">{rhythmTimeline.map((r, i) => (<div key={i} className={`flex-1 h-full border-r border-white/20 ${r.hasTrochee ? 'bg-amber-500' : 'bg-transparent'}`} title={`Frase ${i+1}: Ritmo Trocaico`}/>))}</div></div>
                     </div>
-                    
                     <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-indigo-100">
-                            <div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-indigo-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div>
-                            <div><span className="font-bold text-indigo-800 block">Dáctilo (Óoo)</span><span className="text-xs text-gray-500">Épico, vals, galope.</span></div>
-                        </div>
-                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-emerald-100">
-                            <div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-gray-300"></div><div className="w-2 h-2 rounded-full bg-emerald-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div>
-                            <div><span className="font-bold text-emerald-800 block">Anfíbraco (oÓo)</span><span className="text-xs text-gray-500">Natural, melodioso.</span></div>
-                        </div>
-                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-amber-100">
-                            <div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-amber-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div>
-                            <div><span className="font-bold text-amber-800 block">Troqueo (Óo)</span><span className="text-xs text-gray-500">Duro, militar, infantil.</span></div>
-                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-indigo-100"><div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-indigo-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div><div><span className="font-bold text-indigo-800 block">Dáctilo (Óoo)</span><span className="text-xs text-gray-500">Épico, vals, galope.</span></div></div>
+                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-emerald-100"><div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-gray-300"></div><div className="w-2 h-2 rounded-full bg-emerald-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div><div><span className="font-bold text-emerald-800 block">Anfíbraco (oÓo)</span><span className="text-xs text-gray-500">Natural, melodioso.</span></div></div>
+                        <div className="flex items-center gap-2 p-2 bg-white rounded border border-amber-100"><div className="flex gap-0.5"><div className="w-2 h-2 rounded-full bg-amber-600"></div><div className="w-2 h-2 rounded-full bg-gray-300"></div></div><div><span className="font-bold text-amber-800 block">Troqueo (Óo)</span><span className="text-xs text-gray-500">Duro, militar, infantil.</span></div></div>
                     </div>
                 </div>
-
-                {/* TEXTO CON RESALTADOS */}
                 <div className="space-y-6 font-serif text-lg leading-relaxed text-gray-700">
                     {analysis.rhythmAnalysis.map((sentData, idx) => {
                         if (!sentData) return null;
                         if (sentData.highlights.length === 0) return <p key={idx} className="mb-2 opacity-70">{sentData.text}</p>;
-
                         return (
                             <div key={idx} className="p-4 rounded-lg border border-gray-100 hover:border-indigo-200 hover:shadow-sm transition-all bg-white relative group">
                                 <span className="absolute top-2 right-2 text-xs font-sans font-bold text-gray-300">Frase {idx+1}</span>
@@ -163,25 +122,15 @@ export default function StyleOptimizer() {
                                         const highlight = sentData.highlights.find(h => wIdx >= h.startWordIdx && wIdx <= h.endWordIdx);
                                         let containerClass = "flex flex-col items-center group relative p-1 rounded";
                                         let label = null;
-                                        
                                         if (highlight) {
-                                            if (highlight.type === 'Dactílico') { containerClass += " bg-indigo-50"; if(wIdx===highlight.startWordIdx) label="Dáctilo"; }
-                                            else if (highlight.type === 'Anfíbraco') { containerClass += " bg-emerald-50"; if(wIdx===highlight.startWordIdx) label="Anfíbraco"; }
-                                            else if (highlight.type === 'Trocaico') { containerClass += " bg-amber-50"; if(wIdx===highlight.startWordIdx) label="Troqueo"; }
+                                            if (highlight.type === 'Dactílico') { containerClass += " bg-indigo-50 text-indigo-900"; if(wIdx===highlight.startWordIdx) label="Dáctilo"; }
+                                            else if (highlight.type === 'Anfíbraco') { containerClass += " bg-emerald-50 text-emerald-900"; if(wIdx===highlight.startWordIdx) label="Anfíbraco"; }
+                                            else if (highlight.type === 'Trocaico') { containerClass += " bg-amber-50 text-amber-900"; if(wIdx===highlight.startWordIdx) label="Troqueo"; }
                                         }
-
                                         return (
                                             <div key={wIdx} className={containerClass}>
                                                 {label && <span className="absolute -top-4 left-0 text-[9px] font-sans font-bold uppercase tracking-wider text-gray-400">{label}</span>}
-                                                <div className="flex gap-[2px] mb-1">
-                                                    {w.syllableMap.map((isStressed, sIdx) => (
-                                                        <div 
-                                                            key={sIdx} 
-                                                            className={`rounded-full transition-all ${isStressed && !STOPWORDS.has(w.clean) ? 'bg-indigo-600 w-2 h-2' : 'bg-gray-200 w-1.5 h-1.5'}`} 
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <span>{w.clean}</span>
+                                                <div className="flex gap-[2px] mb-2">{w.syllableMap.map((isStressed, sIdx) => (<div key={sIdx} className={`rounded-full transition-all ${isStressed && !STOPWORDS.has(w.clean) ? 'bg-indigo-600 w-2 h-2' : 'bg-gray-200 w-1.5 h-1.5'}`} />))}</div><span>{w.clean}</span>
                                             </div>
                                         );
                                     })}
@@ -198,45 +147,19 @@ export default function StyleOptimizer() {
     if (viewMode === 'detail-passive') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><UserX className="text-gray-500" /> Voz Pasiva e Impersonal</h2>
-                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
-                </div>
+                <div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><UserX className="text-gray-500" /> Voz Pasiva e Impersonal</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div>
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><AlertTriangle className="text-amber-500" size={20}/> La Trampa de la Pasiva</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-3">
-                            <div className="bg-white p-3 rounded border border-slate-200 shadow-sm">
-                                <p className="text-xs text-slate-400 font-bold uppercase mb-1">EJEMPLO PASIVO (Evitar)</p>
-                                <p className="text-red-700 font-medium">"La decisión <span className="bg-red-100 px-1 rounded">fue tomada</span> por el comité."</p>
-                            </div>
+                            <div className="bg-white p-3 rounded border border-slate-200 shadow-sm"><p className="text-xs text-slate-400 font-bold uppercase mb-1">EJEMPLO PASIVO (Evitar)</p><p className="text-red-700 font-medium">"La decisión <span className="bg-red-100 px-1 rounded">fue tomada</span> por el comité."</p></div>
                             <div className="flex justify-center"><ArrowDown className="text-slate-300"/></div>
-                            <div className="bg-white p-3 rounded border border-green-200 shadow-sm ring-1 ring-green-100">
-                                <p className="text-xs text-green-600 font-bold uppercase mb-1">EJEMPLO ACTIVO (Preferir)</p>
-                                <p className="text-green-800 font-bold">"El comité <span className="underline decoration-green-400 decoration-2">tomó</span> la decisión."</p>
-                            </div>
+                            <div className="bg-white p-3 rounded border border-green-200 shadow-sm ring-1 ring-green-100"><p className="text-xs text-green-600 font-bold uppercase mb-1">EJEMPLO ACTIVO (Preferir)</p><p className="text-green-800 font-bold">"El comité <span className="underline decoration-green-400 decoration-2">tomó</span> la decisión."</p></div>
                         </div>
-                        <div className="text-sm text-slate-600 space-y-4">
-                            <p><strong className="text-slate-800">¿Por qué corregirlo?</strong><br/>La voz pasiva oculta al "agente" (quién hace la acción). Hace que el texto suene burocrático, débil o distante. </p>
-                            <ul className="list-disc list-inside space-y-1 ml-2">
-                                <li>Busca construcciones con <strong>"SER + Participio"</strong> (fue hecho, ha sido visto).</li>
-                                <li>Cuidado con el <strong>"SE" impersonal</strong> (se dice, se comenta).</li>
-                            </ul>
-                        </div>
+                        <div className="text-sm text-slate-600 space-y-4"><p><strong className="text-slate-800">¿Por qué corregirlo?</strong><br/>La voz pasiva oculta al "agente" (quién hace la acción). Hace que el texto suene burocrático, débil o distante. </p><ul className="list-disc list-inside space-y-1 ml-2"><li>Busca construcciones con <strong>"SER + Participio"</strong> (fue hecho, ha sido visto).</li><li>Cuidado con el <strong>"SE" impersonal</strong> (se dice, se comenta).</li></ul></div>
                     </div>
                 </div>
-                <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
-                    {paragraphs.map((para, pIdx) => (
-                        <p key={pIdx} className="mb-6">
-                            {para.split(/(\s+)/).map((w, i) => {
-                                if (!/\w+/.test(w)) return <span key={i}>{w}</span>;
-                                const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                const isPassive = (clean === 'se' || clean === 'fue' || clean === 'fueron' || clean === 'sido' || clean === 'siendo');
-                                return <span key={i} className={isPassive ? "bg-slate-200 text-slate-800 font-bold border-b-2 border-slate-400 px-1 rounded cursor-help" : ""}>{w}</span>;
-                            })}
-                        </p>
-                    ))}
-                </div>
+                <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => ( <p key={pIdx} className="mb-6"> {para.split(/(\s+)/).map((w, i) => { if (!/\w+/.test(w)) return <span key={i}>{w}</span>; const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""); const isPassive = (clean === 'se' || clean === 'fue' || clean === 'fueron' || clean === 'sido' || clean === 'siendo'); return <span key={i} className={isPassive ? "bg-slate-200 text-slate-800 font-bold border-b-2 border-slate-400 px-1 rounded cursor-help" : ""}>{w}</span>; })} </p> ))}</div>
             </div>
         );
     }
@@ -252,22 +175,8 @@ export default function StyleOptimizer() {
 
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
-                 <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Gauge className="text-teal-500" /> Índice de Legibilidad</h2>
-                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
-                </div>
-                <div className="flex flex-col items-center justify-center py-12 space-y-8">
-                    <div className={`relative w-64 h-64 flex items-center justify-center rounded-full border-[16px] ${bg.replace('bg-', 'border-')} transition-all duration-1000`}>
-                        <div className="text-center">
-                            <span className={`text-7xl font-black ${color} tracking-tighter`}>{score}</span>
-                            <span className="block text-xs text-gray-400 uppercase mt-2 tracking-widest">Escala F. Huerta</span>
-                        </div>
-                    </div>
-                    <div className="text-center max-w-lg">
-                        <h3 className={`text-3xl font-bold ${color} mb-2`}>{label}</h3>
-                        <p className="text-gray-600 text-lg">Este índice mide la complejidad estructural del texto basándose en la longitud de las palabras y de las oraciones.</p>
-                    </div>
-                </div>
+                 <div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Gauge className="text-teal-500" /> Índice de Legibilidad</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div>
+                <div className="flex flex-col items-center justify-center py-12 space-y-8"><div className={`relative w-64 h-64 flex items-center justify-center rounded-full border-[16px] ${bg.replace('bg-', 'border-')} transition-all duration-1000`}><div className="text-center"><span className={`text-7xl font-black ${color} tracking-tighter`}>{score}</span><span className="block text-xs text-gray-400 uppercase mt-2 tracking-widest">Escala F. Huerta</span></div></div><div className="text-center max-w-lg"><h3 className={`text-3xl font-bold ${color} mb-2`}>{label}</h3><p className="text-gray-600 text-lg">Este índice mide la complejidad estructural del texto basándose en la longitud de las palabras y de las oraciones.</p></div></div>
             </div>
         );
     }
@@ -276,29 +185,9 @@ export default function StyleOptimizer() {
     if (viewMode === 'detail-dialogue') {
          return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><MessageSquare className="text-blue-500" /> Radiografía de Diálogo</h2>
-                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
-                </div>
-                <div className="mb-8 bg-slate-50 p-4 rounded-xl">
-                    <div className="flex justify-between text-sm font-bold text-gray-600 mb-2">
-                        <span>Narrativa ({100 - analysis.dialogueRatio}%)</span>
-                        <span>Diálogo ({analysis.dialogueRatio}%)</span>
-                    </div>
-                    <div className="h-6 bg-gray-200 rounded-full overflow-hidden flex shadow-inner">
-                        <div className="h-full bg-slate-400" style={{width: `${100 - analysis.dialogueRatio}%`}}></div>
-                        <div className="h-full bg-blue-500" style={{width: `${analysis.dialogueRatio}%`}}></div>
-                    </div>
-                </div>
-                <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">
-                     {paragraphs.map((para, pIdx) => {
-                        if (!para.trim()) return null;
-                        const startsWithDialogue = /^[—–\-―«"“]/.test(para.trim());
-                        return startsWithDialogue 
-                            ? <p key={pIdx} className="mb-4 p-4 rounded-r-xl bg-blue-50 border-l-4 border-blue-400 text-blue-900 font-medium">{para}</p>
-                            : <p key={pIdx} className="mb-4 opacity-80">{para}</p>;
-                    })}
-                </div>
+                <div className="flex justify-between items-center mb-6 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><MessageSquare className="text-blue-500" /> Radiografía de Diálogo</h2><button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button></div>
+                <div className="mb-8 bg-slate-50 p-4 rounded-xl"><div className="flex justify-between text-sm font-bold text-gray-600 mb-2"><span>Narrativa ({100 - analysis.dialogueRatio}%)</span><span>Diálogo ({analysis.dialogueRatio}%)</span></div><div className="h-6 bg-gray-200 rounded-full overflow-hidden flex shadow-inner"><div className="h-full bg-slate-400" style={{width: `${100 - analysis.dialogueRatio}%`}}></div><div className="h-full bg-blue-500" style={{width: `${analysis.dialogueRatio}%`}}></div></div></div>
+                <div className="prose max-w-none font-serif text-lg leading-relaxed text-gray-700">{paragraphs.map((para, pIdx) => { if (!para.trim()) return null; const startsWithDialogue = /^[—–\-―«"“]/.test(para.trim()); return startsWithDialogue ? <p key={pIdx} className="mb-4 p-4 rounded-r-xl bg-blue-50 border-l-4 border-blue-400 text-blue-900 font-medium">{para}</p> : <p key={pIdx} className="mb-4 opacity-80">{para}</p>; })}</div>
             </div>
          );
     }
@@ -638,6 +527,18 @@ export default function StyleOptimizer() {
 
     // 11. DETALLE: CACOFONÍAS (CORREGIDO V3.5 - DOBLE RESALTADO)
     if (viewMode === 'detail-cacophony') {
+        
+        // PRE-CALCULO DE PAREJAS PROBLEMÁTICAS PARA EL TEXTO
+        const shockIndices = new Set();
+        const echoIndices = new Set();
+        const echoPartners = {}; // Map para tooltips
+        const shockPartners = {};
+
+        const allWords = analysis.rawText.split(/\s+/); // Tokenización básica para índices globales
+        // NOTA: Esto es una aproximación para la vista. La lógica real idealmente debería ser más robusta con índices de caracteres.
+        // Para esta versión, usaremos una lógica de paso por párrafo que es más segura visualmente.
+
+        // DATOS PARA EL GRÁFICO
         const soundTimelineData = analysis.rawText.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s)).map((sent, i) => {
             const words = sent.toLowerCase().replace(/[.,;:!?()"«»]/g, "").split(/\s+/).filter(w => w.length > 0);
             let hasShock = false;
@@ -650,7 +551,7 @@ export default function StyleOptimizer() {
                 if (w.length > 4) {
                     const suffix = w.slice(-3);
                     for(let k=1; k<=3; k++) {
-                        if(idx+k < words.length && words[idx+k].endsWith(suffix)) hasEcho = true;
+                        if(idx+k < words.length && words[idx+k].endsWith(suffix) && words[idx+k] !== w) hasEcho = true;
                     }
                 }
             });
@@ -1034,13 +935,50 @@ export default function StyleOptimizer() {
             <section className="space-y-6">
                 <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2 border-gray-200"><Activity className="text-indigo-500"/> RITMO</h3>
                 
-                {/* SISMÓGRAFO FULL WIDTH */}
+                {/* SISMÓGRAFO FULL WIDTH - RECHARTS REAL */}
                 <div className="w-full">
                     <DashboardCard title="Sismógrafo de Frases" icon={<Activity className="text-indigo-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-sismografo')}>
-                        <div className="h-32 flex items-end gap-1 border-b border-gray-100 pb-1 overflow-x-auto mb-1">
-                            {(mode === 'compare' ? analysisV2 : analysisV1).sentenceLengths.map((len, i) => (
-                                <div key={i} className={`w-2 rounded-t transition-all hover:opacity-80 ${len > 25 ? 'bg-red-400' : len < 8 ? 'bg-blue-300' : 'bg-indigo-400'}`} style={{ height: `${Math.min(100, (len/40)*100)}%`, minWidth: '6px' }}></div>
-                            ))}
+                        <div className="mb-2 flex gap-2">
+                            <Badge color="blue" text="Staccato" />
+                            <Badge color="red" text="Muros" />
+                            <Badge color="gray" text="Monotonía" />
+                        </div>
+                        <div className="h-32 w-full">
+                            {/* [FIX] Usamos ResponsiveContainer y BarChart en lugar de divs manuales */}
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart 
+                                    data={(mode === 'compare' ? analysisV2 : analysisV1).sentenceLengths.map((len, i) => {
+                                        const currentData = mode === 'compare' ? analysisV2 : analysisV1;
+                                        const alert = currentData.sismografoAlerts.find(a => i >= a.start && i <= a.end);
+                                        let color = "#818cf8"; // Indigo default
+                                        let alertType = "";
+                                        if (alert) {
+                                            if (alert.type === 'staccato') { color = "#60a5fa"; alertType = "Staccato"; } // Blue
+                                            if (alert.type === 'wall') { color = "#f87171"; alertType = "Muro"; } // Red
+                                            if (alert.type === 'flat') { color = "#9ca3af"; alertType = "Monotonía"; } // Gray
+                                        } else if (len < 8) {
+                                            color = "#93c5fd"; // Light blue for short sentences
+                                        }
+                                        return { id: i+1, len, color, alert: alertType };
+                                    })}
+                                >
+                                    <Tooltip content={<CustomBarTooltip unit="palabras" />} cursor={{fill: 'transparent'}} />
+                                    <Bar dataKey="len" radius={[2, 2, 0, 0]}>
+                                        {/* Mapeo de celdas para colores individuales */}
+                                        {(mode === 'compare' ? analysisV2 : analysisV1).sentenceLengths.map((_, index) => {
+                                             const currentData = mode === 'compare' ? analysisV2 : analysisV1;
+                                             const alert = currentData.sismografoAlerts.find(a => index >= a.start && index <= a.end);
+                                             let color = "#818cf8"; 
+                                             if (alert) {
+                                                 if (alert.type === 'staccato') color = "#60a5fa";
+                                                 if (alert.type === 'wall') color = "#f87171";
+                                                 if (alert.type === 'flat') color = "#9ca3af";
+                                             }
+                                             return <Cell key={`cell-${index}`} fill={color} />
+                                        })}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
                         </div>
                     </DashboardCard>
                 </div>
