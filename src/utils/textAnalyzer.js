@@ -19,6 +19,18 @@ export const PLEONASMS_LIST = [
     "resumen breve", "testigo presencial", "tubo hueco", "vigente actualmente"
 ];
 
+// NUEVO: DICCIONARIO DE INCONTABLES
+export const UNCOUNTABLES = new Set([
+    "mucho", "mucha", "muchos", "muchas",
+    "poco", "poca", "pocos", "pocas",
+    "bastante", "bastantes",
+    "demasiado", "demasiada", "demasiados", "demasiadas",
+    "varios", "varias",
+    "miles", "millones", "cientos", "millares",
+    "infinidad", "montón", "mogollón", "cantidad", "multitud",
+    "algunos", "algunas"
+]);
+
 export const VERBOS_BAUL = new Set([
   "hacer", "hizo", "hace", "hecho", "haciendo", "hago", "haga",
   "tener", "tiene", "tenía", "tenido", "teniendo", "tengo", "tenga",
@@ -131,8 +143,11 @@ export const analyzeText = (text) => {
     
     // Repeticiones Cercanas
     const closeRepetitionIndices = new Set();
-    const lastPositions = {}; // word -> index
-    const DISTANCE_THRESHOLD = 50; // Palabras de distancia para considerar "repetición cercana"
+    const lastPositions = {}; 
+    const DISTANCE_THRESHOLD = 50;
+
+    // Incontables
+    const uncountablesFound = []; // { word, index }
 
     const sensoryCounts = { sight: 0, sound: 0, touch: 0, smell_taste: 0 };
     let totalCommas = 0;
@@ -225,6 +240,12 @@ export const analyzeText = (text) => {
           baulWords.add(clean);
           baulTimeline.push({ word: clean, position: index / wordsRaw.length });
       }
+
+      // Detección de Incontables
+      if (UNCOUNTABLES.has(clean)) {
+          uncountablesFound.push({ word: clean, index: index / wordsRaw.length });
+      }
+
       if (VERBOS_PERCEPCION.has(clean)) perceptionCount++;
 
       // Pasiva
@@ -409,6 +430,7 @@ export const analyzeText = (text) => {
       passiveCount, 
       baulWords: [...baulWords],
       baulTimeline,
+      uncountablesFound, // Nuevo retorno
       cacophonies: [...new Set(cacophonies)],
       perceptionRatio,
       adjectiveClusters,
@@ -420,6 +442,6 @@ export const analyzeText = (text) => {
       weakAdverbs,
       sentenceStarts,
       sentenceStartTimeline,
-      closeRepetitionIndices // Nuevo
+      closeRepetitionIndices
     };
 };

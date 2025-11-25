@@ -4,7 +4,7 @@ import {
   Music, Zap, Layers, Fingerprint, Ear, Utensils,
   PauseCircle, RefreshCcw, MessageSquare, Gauge, UserX, Printer, Globe, Youtube, 
   Edit, Package, AlignJustify, Minus, List, ArrowRight, Clock, ArrowDown, Info,
-  StickyNote, Trash2, PieChart, CheckCircle2, XCircle, Table, BarChart2
+  StickyNote, Trash2, PieChart, CheckCircle2, XCircle, Table, BarChart2, Hash
 } from 'lucide-react';
 import { 
     BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
@@ -19,7 +19,8 @@ import {
     SENSORY_DICT, 
     SUFIJOS_ADJETIVOS, 
     STOPWORDS,
-    PALABRAS_BAUL 
+    PALABRAS_BAUL,
+    UNCOUNTABLES // Importamos el diccionario
 } from './utils/textAnalyzer';
 
 import { 
@@ -95,6 +96,9 @@ export default function StyleOptimizer() {
     if (!analysis) return null;
     const paragraphs = analysis.rawText.split(/\n+/);
     
+    // ... Existing render details ...
+    // Se mantienen los bloques anteriores (Prosodia, Pasiva, Legibilidad, Diálogo, Sismógrafo, ShowTell, Baul, Puntuación, Métricas, Senses, Cacofonía, Repeticiones, Anáforas, Sticky, Pleonasmos, Starts, WeakVerbs)
+
     // 1. DETALLE: ESCÁNER PROSÓDICO
     if (viewMode === 'detail-prosody') {
         const rhythmTimeline = analysis.rhythmAnalysis.map(s => ({
@@ -149,7 +153,7 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 2. DETALLE: VOZ PASIVA (AÑADIDO GRÁFICO)
+    // 2. DETALLE: VOZ PASIVA
     if (viewMode === 'detail-passive') {
         const activeSentences = analysis.sentenceCount - analysis.passiveCount;
         const data = [
@@ -232,15 +236,12 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Activity className="text-indigo-500" /> Mapa de Longitud y Cadencia</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-
-                {/* --- LEYENDA AÑADIDA --- */}
                 <div className="flex flex-wrap justify-center gap-4 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Staccato (Rápido)</span></div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-red-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Muro (Denso)</span></div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-gray-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Monotonía (Repetitivo)</span></div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-indigo-400 rounded shadow-sm"></div> <span className="text-xs font-bold text-gray-600">Fluido (Normal)</span></div>
                 </div>
-
                 <div className="h-64 w-full mb-8">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData}>
@@ -289,7 +290,7 @@ export default function StyleOptimizer() {
             </div>
          )
     }
-    // 6. DETALLE: SHOW VS TELL (AÑADIDO GRÁFICO Y CONTEXTO)
+    // 6. DETALLE: SHOW VS TELL
     if (viewMode === 'detail-showtell') {
         const chartData = analysis.perceptionPerSentence.map((count, i) => ({
             id: i+1,
@@ -303,8 +304,6 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Eye className="text-green-600" /> Show vs Tell (Filtros Mentales)</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-
-                {/* CONTEXTO Y GRÁFICO */}
                 <div className="mb-8 bg-green-50 p-6 rounded-xl border border-green-200">
                     <div className="flex gap-4 items-start mb-4">
                         <div className="p-2 bg-white rounded-lg shadow-sm text-green-600"><Eye size={24}/></div>
@@ -333,7 +332,6 @@ export default function StyleOptimizer() {
                         <span className="flex items-center gap-1"><div className="w-2 h-2 bg-red-400 rounded-full"></div> Filtrado (Tell)</span>
                     </div>
                 </div>
-
                 <div className="prose max-w-none text-lg text-gray-700 font-serif">
                      {paragraphs.map((para, pIdx) => (
                         <p key={pIdx} className="mb-6">
@@ -348,7 +346,7 @@ export default function StyleOptimizer() {
             </div>
         )
     }
-    // 7. DETALLE: PALABRAS BAÚL (TIMELINE MEJORADO)
+    // 7. DETALLE: PALABRAS BAÚL
     if (viewMode === 'detail-baul') {
         return (
              <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px]">
@@ -366,8 +364,6 @@ export default function StyleOptimizer() {
                             <span className="bg-white px-2 py-1 rounded text-orange-600 border border-orange-200">Cosa → Objeto</span>
                         </div>
                     </div>
-                    
-                    {/* TIMELINE DE PALABRAS BAÚL */}
                     <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Distribución en el texto</h3>
                         <div className="h-12 w-full bg-gray-100 rounded-full relative flex items-center overflow-hidden">
@@ -401,7 +397,7 @@ export default function StyleOptimizer() {
             </div>
         )
     }
-    // 8. DETALLE: DENSIDAD DE PUNTUACIÓN (GRÁFICO RESTAURADO & LEYENDA MEJORADA)
+    // 8. DETALLE: DENSIDAD DE PUNTUACIÓN
     if (viewMode === 'detail-punctuation') {
         const chartData = analysis.commasPerSentence.map((count, i) => ({
             id: i+1,
@@ -415,8 +411,6 @@ export default function StyleOptimizer() {
                     <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><PauseCircle className="text-orange-500" /> Ritmo Respiratorio</h2>
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
-                
-                {/* GRÁFICO RESTAURADO CON ENCUADRE CORREGIDO */}
                 <div className="h-48 mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{top: 10, right: 10, left: -20, bottom: 0}}>
@@ -466,7 +460,7 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 9. DETALLE: MÉTRICAS DE ESTILO (CORREGIDO RESALTADO TEXTO)
+    // 9. DETALLE: MÉTRICAS DE ESTILO
     if (viewMode === 'detail-metrics') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
@@ -526,7 +520,6 @@ export default function StyleOptimizer() {
                                 let style = "";
                                 let title = "";
                                 
-                                // Verificamos CADA condición independientemente para que no se pisen
                                 // 1. Adverbios
                                 if (clean.endsWith("mente") && clean.length > 5) {
                                     style += " bg-purple-100 text-purple-900 border-b-2 border-purple-300";
@@ -538,7 +531,7 @@ export default function StyleOptimizer() {
                                     title = "Nominalización";
                                 }
                                 
-                                // 3. Cluster Adjetivos (Lógica en línea - Marcar ambas palabras)
+                                // 3. Cluster Adjetivos
                                 const isAdj = (word) => SUFIJOS_ADJETIVOS.some(s => word && word.endsWith(s));
                                 let isClusterPart = false;
                                 if (!STOPWORDS.has(clean) && isAdj(clean)) {
@@ -553,7 +546,6 @@ export default function StyleOptimizer() {
                                 }
                                 
                                 if (isClusterPart) {
-                                    // Usamos un naranja fuerte para que destaque sobre otros estilos si coinciden (raro)
                                     style = " bg-orange-100 text-orange-900 border-b-2 border-orange-300 font-medium"; 
                                     title = "Cluster de Adjetivos";
                                 }
@@ -566,7 +558,7 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 10. DETALLE: MAPA SENSORIAL (TIMELINES SEPARADOS)
+    // 10. DETALLE: MAPA SENSORIAL
     if (viewMode === 'detail-senses') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
@@ -636,7 +628,7 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 11. DETALLE: CACOFONÍAS (TIMELINES SEPARADOS)
+    // 11. DETALLE: CACOFONÍAS
     if (viewMode === 'detail-cacophony') {
         const soundData = analysis.sentenceLengths.map((_, i) => {
              const sentenceText = analysis.rawText.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s))[i] || "";
@@ -734,10 +726,9 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 12. DETALLE: REPETICIONES CERCANAS (CAMBIADO DE NOMBRE Y LÓGICA)
+    // 12. DETALLE: REPETICIONES CERCANAS
     if (viewMode === 'detail-repetitions') {
-        // Crear datos para gráfico de densidad de repeticiones cercanas
-        // Agrupamos por tramos del 10% del texto
+        // Crear datos para gráfico de densidad
         const densityData = Array(10).fill(0).map((_, i) => ({ x: i, count: 0 }));
         const totalWords = analysis.wordCount;
         
@@ -803,19 +794,7 @@ export default function StyleOptimizer() {
                         {paragraphs.map((para, pIdx) => (
                             <p key={pIdx} className="mb-6">
                                 {para.split(/(\s+)/).map((w, i) => {
-                                    // Calcular el índice global aproximado de la palabra para cruzar con closeRepetitionIndices
-                                    // Esta es una aproximación visual; en una app real usaríamos un mapeo exacto de tokens.
-                                    // Aquí simplemente resaltamos si la palabra es una de las "frecuentes" Y está cerca de otra.
-                                    // Para simplificar en esta vista estática: usamos el análisis previo.
-                                    
                                     const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, "");
-                                    // Simulamos índice para buscar en el Set (esto requeriría pasar el índice exacto desde el render, 
-                                    // pero para efectos visuales, si la palabra está en las repeticiones, la marcamos).
-                                    // MEJORA: Usar un contador global si fuera necesario, pero aquí marcaremos las del TOP 10 para simplicidad visual robusta
-                                    // O MEJOR: Si textAnalyzer devolvió índices, los usamos. Pero como el renderizado de React divide por párrafos y espacios,
-                                    // perderíamos el índice exacto absoluto fácilmente.
-                                    // FALLBACK ROBUSTO: Marcar si es una palabra del TOP 10 que NO es stopword.
-                                    
                                     const isTopRep = analysis.repetitions.slice(0, 10).some(r => r[0] === clean) && !STOPWORDS.has(clean);
                                     
                                     return <span key={i} className={isTopRep ? "bg-blue-100 text-blue-900 border-b border-blue-300 font-medium cursor-help" : ""} title={isTopRep ? "Repetición frecuente" : ""}>{w} </span>;
@@ -856,15 +835,13 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 14. DETALLE: FRASES PEGAJOSAS (CORREGIDO TIMELINE Y RESALTADO)
+    // 14. DETALLE: FRASES PEGAJOSAS
     if (viewMode === 'detail-sticky') {
-        // Cálculo para el gráfico: Ratio de pegamento por frase
         const stickyData = analysis.stickySentences.map(s => ({
             id: s.index + 1,
             ratio: s.glueRatio
         }));
         
-        // Usamos un contador global de frases para sincronizar con el texto
         let sentenceCounter = 0;
 
         return (
@@ -878,7 +855,6 @@ export default function StyleOptimizer() {
                     <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2"><Info size={20}/> ¿Qué es una frase pegajosa?</h3>
                     <p className="text-sm text-yellow-700 mb-4">Son oraciones con <strong>más del 45%</strong> de palabras funcionales. Entorpecen la lectura.</p>
                     
-                    {/* Timeline gráfico simple */}
                     <div className="h-24 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={stickyData}>
@@ -900,10 +876,8 @@ export default function StyleOptimizer() {
                        for (let i = 0; i < sentences.length; i++) {
                            const part = sentences[i];
                            buffer += part;
-                           // Si es delimitador o final, procesamos la frase
                            if (/^[.!?]+$/.test(part) || i === sentences.length - 1) {
                                if (buffer.trim().length > 0 && !/^[.!?]+$/.test(buffer)) {
-                                   // Verificamos si el índice actual coincide con una sticky sentence
                                    const currentIdx = sentenceCounter; 
                                    const isSticky = analysis.stickySentences.some(s => s.index === currentIdx);
                                    
@@ -920,7 +894,7 @@ export default function StyleOptimizer() {
                                    } else {
                                        renderedSentences.push(<span key={currentIdx}>{buffer}</span>);
                                    }
-                                   sentenceCounter++; // Incrementamos el contador real de frases
+                                   sentenceCounter++; 
                                } else {
                                    renderedSentences.push(<span key={`punct-${i}`}>{buffer}</span>);
                                }
@@ -942,13 +916,11 @@ export default function StyleOptimizer() {
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
                 
-                {/* EDUCATIONAL HEADER */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                     <div className="bg-red-50 p-5 rounded-xl border border-red-100">
                         <h3 className="font-bold text-red-900 mb-2 flex items-center gap-2"><Info size={16}/> ¿Qué es un Pleonasmo?</h3>
                         <p className="text-sm text-red-800 leading-relaxed">
                             Es una figura retórica que consiste en añadir palabras innecesarias para la comprensión del mensaje. 
-                            Aunque a veces se usa para dar fuerza ("lo vi con mis propios ojos"), en textos técnicos o narrativos limpios suele considerarse un vicio (pobreza léxica).
                         </p>
                     </div>
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
@@ -1006,7 +978,6 @@ export default function StyleOptimizer() {
                     <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
                 </div>
                 
-                {/* CHART AREA */}
                 <div className="flex flex-col md:flex-row items-center justify-center gap-12 mb-10">
                     <div className="w-full md:w-1/2 h-64">
                         <ResponsiveContainer width="100%" height="100%">
@@ -1032,7 +1003,6 @@ export default function StyleOptimizer() {
                     </div>
                 </div>
 
-                {/* TIMELINE LINEAL AÑADIDO */}
                 <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
                     <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">Distribución Secuencial (Frase a Frase)</h3>
                     <div className="h-8 w-full flex rounded-lg overflow-hidden">
@@ -1056,7 +1026,56 @@ export default function StyleOptimizer() {
             </div>
         );
     }
-    // 17. DETALLE: FUERZA VERBAL
+    // 17. DETALLE: INCONTABLES
+    if (viewMode === 'detail-uncountables') {
+        return (
+             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px]">
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><Hash className="text-cyan-600" /> Incontables (Imprecisiones)</h2>
+                    <button onClick={() => setViewMode("dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition"><ArrowLeft size={20} /> Volver</button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="bg-cyan-50 p-5 rounded-xl border border-cyan-100">
+                        <h3 className="font-bold text-cyan-900 mb-2 flex items-center gap-2"><Info size={16}/> ¿Por qué evitarlos?</h3>
+                        <p className="text-sm text-cyan-800 mb-2">Palabras como <i>"muchos", "miles", "bastante"</i> son borrosas. El cerebro no puede visualizar "muchos pájaros", pero sí "treinta pájaros" o "una nube de pájaros".</p>
+                    </div>
+                    
+                    {/* TIMELINE DE INCONTABLES */}
+                    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Distribución</h3>
+                        <div className="h-12 w-full bg-gray-100 rounded-full relative flex items-center overflow-hidden">
+                            {analysis.uncountablesFound.map((item, idx) => (
+                                <div 
+                                    key={idx}
+                                    className="absolute w-1 h-full bg-cyan-500 opacity-50 hover:opacity-100 transition-all"
+                                    style={{ left: `${item.index * 100}%` }}
+                                    title={`"${item.word}"`}
+                                />
+                            ))}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-gray-400 mt-1 font-mono">
+                            <span>Inicio</span>
+                            <span>Final</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="prose max-w-none text-lg text-gray-700 font-serif">
+                     {paragraphs.map((para, pIdx) => (
+                        <p key={pIdx} className="mb-6">
+                            {para.split(/(\s+)/).map((w, i) => {
+                                const clean = w.toLowerCase().replace(/[.,;:!?()"«»]/g, "");
+                                const isUncountable = analysis.uncountablesFound.some(u => u.word === clean);
+                                return <span key={i} className={isUncountable ? "bg-cyan-100 text-cyan-900 border-b-2 border-cyan-300 px-1 rounded font-bold" : ""}>{w}</span>
+                            })}
+                        </p>
+                     ))}
+                </div>
+            </div>
+        )
+    }
+    // 18. DETALLE: FUERZA VERBAL
     if (viewMode === 'detail-weakverbs') {
         return (
             <div className="bg-white rounded-xl shadow-lg p-8 min-h-[500px] animate-in fade-in slide-in-from-right-4 duration-300">
@@ -1243,11 +1262,96 @@ export default function StyleOptimizer() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-gray-800 mb-8">
-                            <ComparisonCard title="Limpieza (-mente)" label="Adverbios" valOld={analysisV1.rhymes.mente} valNew={analysisV2.rhymes.mente} inverse={true} />
-                            <ComparisonCard title="Precisión (Baúl)" label="Palabras vagas" valOld={analysisV1.baulWords.length} valNew={analysisV2.baulWords.length} inverse={true} />
-                             <ComparisonCard title="Show vs Tell" label="Filtros mentales" valOld={Number(analysisV1.perceptionRatio)} valNew={Number(analysisV2.perceptionRatio)} inverse={true} suffix="%" />
+                        {/* FILA 1: ESTRUCTURA GENERAL */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-gray-800 mb-4">
+                            <ComparisonCard title="Legibilidad" label="Escala Huerta" valOld={analysisV1.readabilityScore} valNew={analysisV2.readabilityScore} inverse={false} />
                             <ComparisonCard title="Longitud Media" label="Palabras/Frase" valOld={Number(analysisV1.avgSentenceLength)} valNew={Number(analysisV2.avgSentenceLength)} inverse={false} />
+                            <ComparisonCard title="Show vs Tell" label="Filtros mentales" valOld={Number(analysisV1.perceptionRatio)} valNew={Number(analysisV2.perceptionRatio)} inverse={true} suffix="%" />
+                            <ComparisonCard title="Ritmo (Puntuación)" label="Comas/frase" valOld={analysisV1.punctuationDensity} valNew={analysisV2.punctuationDensity} inverse={false} />
+                        </div>
+
+                        {/* FILA 2: HIGIENE Y LIMPIEZA */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-gray-800 mb-4">
+                            <ComparisonCard title="Frases Pegajosas" label="Exceso grasa" valOld={analysisV1.stickySentences.length} valNew={analysisV2.stickySentences.length} inverse={true} />
+                            <ComparisonCard title="Pleonasmos" label="Redundancias" valOld={analysisV1.pleonasmsFound.length} valNew={analysisV2.pleonasmsFound.length} inverse={true} />
+                            <ComparisonCard title="Precisión (Baúl)" label="Palabras vagas" valOld={analysisV1.baulWords.length} valNew={analysisV2.baulWords.length} inverse={true} />
+                            <ComparisonCard title="Cacofonías" label="Choques sonoros" valOld={analysisV1.cacophonies.length} valNew={analysisV2.cacophonies.length} inverse={true} />
+                        </div>
+
+                        {/* FILA 3: ESTILO Y VICIOS */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-gray-800 mb-8">
+                            <ComparisonCard title="Voz Pasiva" label="Construcciones" valOld={analysisV1.passiveCount} valNew={analysisV2.passiveCount} inverse={true} />
+                            <ComparisonCard title="Fuerza Verbal" label="Verbos débiles" valOld={analysisV1.weakAdverbs.length} valNew={analysisV2.weakAdverbs.length} inverse={true} />
+                            <ComparisonCard title="Estilo (-mente)" label="Adverbios" valOld={analysisV1.rhymes.mente} valNew={analysisV2.rhymes.mente} inverse={true} />
+                            <ComparisonCard title="Estilo (-ción)" label="Nominaliz." valOld={analysisV1.rhymes.cion} valNew={analysisV2.rhymes.cion} inverse={true} />
+                        </div>
+
+                        {/* COMPARACIÓN VISUAL DEL SISMÓGRAFO (SUPERPUESTO Y COLOREADO) */}
+                        <div className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                            <h3 className="font-bold text-indigo-100 mb-4 flex items-center gap-2"><Activity size={18}/> Ritmo Comparado (Superposición Visual)</h3>
+                            <div className="h-64 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart 
+                                        data={[...analysisV1.sentenceLengths.map((len, i) => {
+                                            // Preparamos datos V2
+                                            const lenV2 = analysisV2.sentenceLengths[i] || 0;
+                                            const alertV2 = analysisV2.sismografoAlerts.find(a => i >= a.start && i <= a.end);
+                                            
+                                            // Determinamos color de la barra V2 según su estado
+                                            let colorV2 = "#818cf8"; // Violeta (Normal)
+                                            let labelV2 = "Normal";
+                                            if (alertV2) {
+                                                if (alertV2.type === 'staccato') { colorV2 = "#60a5fa"; labelV2 = "Staccato"; }
+                                                if (alertV2.type === 'wall') { colorV2 = "#f87171"; labelV2 = "Muro"; }
+                                                if (alertV2.type === 'flat') { colorV2 = "#9ca3af"; labelV2 = "Monótono"; }
+                                            }
+
+                                            return { 
+                                                name: i+1, 
+                                                v1: len, 
+                                                v2: lenV2,
+                                                colorV2,
+                                                alert: labelV2
+                                            };
+                                        })].slice(0, 60)} // Limitamos a 60 frases
+                                        barGap={-100} // Superposición total
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                                        <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" tick={{fontSize: 10}} interval={4} />
+                                        <YAxis stroke="rgba(255,255,255,0.5)" />
+                                        <Tooltip 
+                                            cursor={{fill: 'rgba(255,255,255,0.1)'}}
+                                            content={<CustomBarTooltip unit="palabras" label="" />}
+                                        />
+                                        <Legend wrapperStyle={{ paddingTop: '10px', color: '#e0e7ff' }}/>
+                                        
+                                        {/* Barra Original (Gris fantasma) */}
+                                        <Bar dataKey="v1" name="Original" fill="rgba(255,255,255,0.15)" radius={[4, 4, 0, 0]} barSize={12} /> 
+                                        
+                                        {/* Barra Editada (Coloreada según ritmo) */}
+                                        <Bar dataKey="v2" name="Editada" radius={[4, 4, 0, 0]} barSize={6}>
+                                            {/* Mapeamos cada celda para darle su color dinámico */}
+                                            {[...analysisV1.sentenceLengths].slice(0,60).map((_, index) => {
+                                                const alert = analysisV2.sismografoAlerts.find(a => index >= a.start && index <= a.end);
+                                                let color = "#818cf8"; 
+                                                if (alert) {
+                                                    if (alert.type === 'staccato') color = "#60a5fa";
+                                                    if (alert.type === 'wall') color = "#f87171";
+                                                    if (alert.type === 'flat') color = "#9ca3af";
+                                                }
+                                                return <Cell key={`cell-${index}`} fill={color} />
+                                            })}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex justify-center gap-4 mt-4 text-[10px] text-indigo-200 uppercase font-bold tracking-wider">
+                                <span className="flex items-center gap-1"><div className="w-2 h-2 bg-blue-400 rounded-full"></div> Staccato</span>
+                                <span className="flex items-center gap-1"><div className="w-2 h-2 bg-red-400 rounded-full"></div> Muro</span>
+                                <span className="flex items-center gap-1"><div className="w-2 h-2 bg-gray-400 rounded-full"></div> Monótono</span>
+                                <span className="flex items-center gap-1"><div className="w-2 h-2 bg-indigo-400 rounded-full"></div> Normal</span>
+                                <span className="flex items-center gap-1 ml-4 text-white/30"><div className="w-2 h-2 bg-white/20 rounded-full"></div> Original (Fondo)</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1427,6 +1531,11 @@ export default function StyleOptimizer() {
 
                     <DashboardCard title="Palabras Baúl" icon={<Package className="text-orange-500 w-5 h-5" />} onViewDetail={() => setViewMode('detail-baul')}>
                         <div className="text-center py-2"><span className="text-3xl font-bold text-orange-500">{(mode === 'compare' ? analysisV2 : analysisV1).baulWords.length}</span><p className="text-xs text-gray-400">términos vagos</p></div>
+                    </DashboardCard>
+
+                    {/* INCONTABLES */}
+                    <DashboardCard title="Incontables" icon={<Hash className="text-cyan-600 w-5 h-5" />} onViewDetail={() => setViewMode('detail-uncountables')}>
+                        <div className="text-center py-2"><span className="text-3xl font-bold text-cyan-600">{(mode === 'compare' ? analysisV2 : analysisV1).uncountablesFound.length}</span><p className="text-xs text-gray-400">imprecisiones</p></div>
                     </DashboardCard>
                 </div>
             </section>
