@@ -1,13 +1,17 @@
 // --- DICCIONARIOS Y CONSTANTES ---
 
 export const STOPWORDS = new Set([
-  "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "o", "pero", "que", "de", "del", "al", "en", "con", "por", "para", "si", "no", "es", "son", "a", "su", "sus", "mi", "mis", "tu", "tus", "se", "le", "les", "lo", "me", "te", "nos", "os", "esta", "este", "esto", "como", "cuando", "donde", "porque", "tan", "muy", "más", "ese", "esa", "eso"
+  "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "o", "pero", "que", "de", "del", "al", "en", "con", "por", "para", "si", "no", "es", "son", "a", "su", "sus", "mi", "mis", "tu", "tus", "se", "le", "les", "lo", "me", "te", "nos", "os", "esta", "este", "esto", "como", "cuando", "donde", "porque", "tan", "muy", "más", "ese", "esa", "eso", "aquello", "aquella", "aquellos", "cuyo", "cuya", "quien", "quienes", "cual", "cuales"
 ]);
 
 export const PREPOSITIONS = new Set(["a", "ante", "bajo", "cabe", "con", "contra", "de", "desde", "durante", "en", "entre", "hacia", "hasta", "mediante", "para", "por", "según", "sin", "so", "sobre", "tras", "versus", "via"]);
-export const ARTICLES = new Set(["el", "la", "los", "las", "un", "una", "unos", "unas"]);
-export const PRONOUNS = new Set(["yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "me", "te", "se", "nos", "os", "le", "les"]);
-export const CONNECTORS = new Set(["pero", "mas", "sino", "entonces", "luego", "pues", "aunque", "así", "además", "también", "tampoco"]);
+export const ARTICLES = new Set(["el", "la", "los", "las", "un", "una", "unos", "unas", "lo"]);
+export const PRONOUNS = new Set(["yo", "tú", "él", "ella", "ello", "nosotros", "nosotras", "vosotros", "vosotras", "ellos", "ellas", "me", "te", "se", "nos", "os", "le", "les", "lo", "la", "los", "las", "mí", "ti", "sí", "conmigo", "contigo", "consigo"]);
+export const CONNECTORS = new Set([
+    "pero", "mas", "sino", "entonces", "luego", "pues", "aunque", "así", "además", "también", "tampoco", 
+    "por lo tanto", "en consecuencia", "sin embargo", "no obstante", "por consiguiente", "finalmente", 
+    "asimismo", "igualmente", "es decir", "o sea", "por ejemplo", "en primer lugar", "a continuación"
+]);
 
 export const PLEONASMS_LIST = [
     "subir arriba", "bajar abajo", "entrar dentro", "salir fuera", "cita previa", 
@@ -16,19 +20,44 @@ export const PLEONASMS_LIST = [
     "falso pretexto", "conclusión final", "divisas extranjeras", "experiencia pasada",
     "hemorragia de sangre", "lapso de tiempo", "mendrugo de pan", "opinión personal",
     "partitura musical", "peluca postiza", "puño cerrado", "réplica exacta",
-    "resumen breve", "testigo presencial", "tubo hueco", "vigente actualmente"
+    "resumen breve", "testigo presencial", "tubo hueco", "vigente actualmente",
+    "accidente fortuito", "actualmente en vigor", "adelantar vísperas", "además de eso",
+    "ambos dos", "antecedentes previos", "aplaudir con las manos", "árbol de madera",
+    "autopsia de un cadáver", "barco de agua", "beber líquidos", "cállate la boca",
+    "casco urbano", "cenar por la noche", "cita previa", "claramente obvio",
+    "colaborar juntos", "comer comida", "completamente lleno", "completamente vacío",
+    "comunidado de común acuerdo", "conocer por primera vez", "constelación de estrellas",
+    "correr corriendo", "crear de la nada", "demanda exigente", "desenlace final",
+    "destino final", "diferentes variedades", "dividir en partes", "dolor doloroso",
+    "ejemplo práctico", "el día de hoy", "erario público", "especie diferente",
+    "falso engaño", "frecuentar a menudo", "funcionar correctamente", "gran magnitud",
+    "hielo frío", "hija mujer", "hijo varón", "historia pasada", "inaugurar nuevo",
+    "interrelacionados entre sí", "jauría de perros", "justicia justa", "la caída hacia abajo",
+    "la propia persona", "lavar con agua", "lo vi con mis propios ojos", "llovía lluvia",
+    "madrugar temprano", "malvado villano", "mayoría de la gente", "medicina curativa",
+    "mentira falsa", "mes de julio", "mi propia opinión", "muy óptimo", "muy pésimo",
+    "nacer de nuevo", "nadar en el agua", "nevar nieve", "niño pequeño", "nunca jamás",
+    "obsequio gratuito", "olvidar por completo", "orilla del mar", "par de dos",
+    "parece ser", "parte integrante", "pequeño detalle", "período de tiempo",
+    "pero sin embargo", "persona humana", "planes de futuro", "polos opuestos",
+    "posibilidad posible", "predecir el futuro", "protagonista principal",
+    "puerta de entrada", "puerta de salida", "querer desear", "reafirmar otra vez",
+    "realidad verdadera", "recordar de memoria", "regalo regalado", "repetir de nuevo",
+    "replicar de vuelta", "reserva anticipada", "resultado final", "reunirse todos juntos",
+    "salirse para afuera", "seguir adelante", "soltar de las manos", "suma total",
+    "supuesto hipotético", "te vuelvo a repetir", "terminar de acabar", "testigo ocular",
+    "todavía aún", "tormenta tempestuosa", "tubo hueco", "unanimidad total",
+    "único y exclusivo", "vaciar el vacío", "venir aquí", "verídico y cierto",
+    "volver a empezar", "volver a repetir", "vuelo aéreo", "yo personalmente"
 ];
 
-// NUEVO: DICCIONARIO DE INCONTABLES
 export const UNCOUNTABLES = new Set([
-    "mucho", "mucha", "muchos", "muchas",
-    "poco", "poca", "pocos", "pocas",
-    "bastante", "bastantes",
-    "demasiado", "demasiada", "demasiados", "demasiadas",
-    "varios", "varias",
-    "miles", "millones", "cientos", "millares",
-    "infinidad", "montón", "mogollón", "cantidad", "multitud",
-    "algunos", "algunas"
+    "mucho", "mucha", "muchos", "muchas", "poco", "poca", "pocos", "pocas",
+    "bastante", "bastantes", "demasiado", "demasiada", "demasiados", "demasiadas",
+    "varios", "varias", "múltiples", "numerosos", "numerosas", "miles", "millones", 
+    "cientos", "millares", "infinidad", "montón", "mogollón", "cantidad", "multitud",
+    "algunos", "algunas", "ciertos", "ciertas", "un sinfín", "una barbaridad", 
+    "la mayoría", "gran parte", "todo", "toda", "todos", "todas", "nada", "algo"
 ]);
 
 export const VERBOS_BAUL = new Set([
@@ -36,14 +65,16 @@ export const VERBOS_BAUL = new Set([
   "tener", "tiene", "tenía", "tenido", "teniendo", "tengo", "tenga",
   "poner", "puso", "puesto", "poniendo", "pongo", "ponga",
   "decir", "dijo", "dicho", "diciendo", "digo", "diga",
-  "haber", "hay", "había", "hubo",
-  "dar", "dio", "dado", "dando", "doy"
+  "haber", "hay", "había", "hubo", "dar", "dio", "dado", "dando", "doy",
+  "realizar", "efectuar", "proceder", "ejecutar", "llevar a cabo",
+  "existir", "ocurrir", "suceder", "acontecer"
 ]);
 
 export const SUSTANTIVOS_BAUL = new Set([
   "cosa", "cosas", "algo", "tema", "temas", "asunto", "asuntos", 
-  "gente", "personas", "tipo", "tipos", "problema", "problemas", "manera", "formas",
-  "bueno", "malo", "importante", "interesante" 
+  "gente", "personas", "tipo", "tipos", "problema", "problemas", 
+  "manera", "formas", "modo", "estilo", "bueno", "malo", "importante", "interesante", 
+  "aspecto", "elemento", "factor", "cuestión", "dato", "hecho", "situación", "circunstancia", "momento"
 ]);
 
 export const PALABRAS_BAUL = new Set([...VERBOS_BAUL, ...SUSTANTIVOS_BAUL]);
@@ -64,17 +95,44 @@ export const VERBOS_PERCEPCION = new Set([
   "recordar", "recuerdo", "recuerda", "recordé", "recordó", "recordaba",
   "imaginar", "imagino", "imagina", "imaginé", "imaginó", "imaginaba",
   "decidir", "decido", "decide", "decidí", "decidió", "decidía",
-  "comprender", "comprendo", "comprende", "comprendí", "comprendió", "comprendía"
+  "comprender", "comprendo", "comprende", "comprendí", "comprendió", "comprendía",
+  "darse cuenta", "percatarse", "advertir"
+]);
+
+export const DIALOGUE_TAGS = new Set([
+    "dijo", "dice", "preguntó", "respondió", "contestó", "exclamó", "susurró", 
+    "gritó", "añadió", "replicó", "comentó", "aseguró", "explicó", "inquirió", 
+    "apuntó", "balbuceó", "masculló", "protestó", "admitió", "negó"
 ]);
 
 export const SENSORY_DICT = {
-    sight: new Set(["rojo", "azul", "verde", "amarillo", "blanco", "negro", "gris", "brillante", "oscuro", "luz", "sombra", "pálido", "resplandor", "destello", "color", "transparente", "borroso", "nítido", "visual", "imagen", "reflejo"]),
-    sound: new Set(["ruido", "sonido", "silencio", "grito", "susurro", "crujido", "estruendo", "murmullo", "eco", "voz", "zumbido", "chirrido", "golpe", "timbres", "melodía", "musical", "audible", "ronco", "agudo"]),
-    touch: new Set(["suave", "áspero", "rugoso", "frío", "caliente", "tibio", "helado", "ardiente", "duro", "blando", "húmedo", "seco", "pegajoso", "piel", "caricia", "golpe", "roce", "textura", "seda", "lija"]),
-    smell_taste: new Set(["olor", "aroma", "perfume", "peste", "hedor", "fragancia", "dulce", "amargo", "salado", "ácido", "picante", "sabor", "gusto", "delicioso", "nauseabundo", "acre", "rancio", "fresco"])
+    sight: new Set([
+        "rojo", "azul", "verde", "amarillo", "blanco", "negro", "gris", "púrpura", "naranja", "violeta", "turquesa", "dorado", "plateado",
+        "brillante", "oscuro", "luz", "sombra", "pálido", "resplandor", "destello", "color", "transparente", "opaco", "turbio",
+        "borroso", "nítido", "visual", "imagen", "reflejo", "silueta", "contorno", "forma", "centelleo", "fulgor", "tenue", "apagado",
+        "radiante", "luminoso", "sombrío", "claro", "cristalino", "pigmento", "teñido", "manchado", "incoloro", "iridiscente"
+    ]),
+    sound: new Set([
+        "ruido", "sonido", "silencio", "grito", "susurro", "crujido", "estruendo", "murmullo", "eco", "voz", "zumbido", "chirrido", "golpe", 
+        "timbre", "melodía", "musical", "audible", "ronco", "agudo", "grave", "chillido", "alarido", "llanto", "gemido", "risas", "carcajada",
+        "detonación", "explosión", "siseo", "jadeo", "respiración", "latido", "tañido", "repiqueteo", "tictac", "voces", "cántico", "rugido",
+        "bramido", "aullido", "ladrido", "maullido", "crasitar", "gorjeo", "silbido", "crepitar", "sonoro", "ensordecedor"
+    ]),
+    touch: new Set([
+        "suave", "áspero", "rugoso", "frío", "caliente", "tibio", "helado", "ardiente", "duro", "blando", "húmedo", "seco", "pegajoso", 
+        "piel", "caricia", "golpe", "roce", "textura", "seda", "lija", "terciopelo", "viscoso", "gelatinoso", "arenoso", "polvoriento",
+        "punzante", "afilado", "cortante", "rombo", "mullido", "esponjoso", "tirante", "relajado", "presión", "peso", "ligero", "pesado",
+        "cosquilleo", "hormigueo", "entumecido", "dolor", "calambre", "tensión", "frío", "calor", "abrasador", "gélido"
+    ]),
+    smell_taste: new Set([
+        "olor", "aroma", "perfume", "peste", "hedor", "fragancia", "dulce", "amargo", "salado", "ácido", "picante", "sabor", "gusto", 
+        "delicioso", "nauseabundo", "acre", "rancio", "fresco", "podrido", "descompuesto", "floral", "frutal", "cítrico", "ahumado", "quemado",
+        "metálico", "moho", "humedad", "sudor", "menta", "vainilla", "canela", "especia", "condimentado", "soso", "insípido", "empalagoso",
+        "agridulce", "avinagrado", "almizcle", "fétido", "pestilencia", "tufo", "hediondo", "sabroso", "exquisito", "rico"
+    ])
 };
 
-export const SUFIJOS_ADJETIVOS = ["oso", "osa", "ble", "al", "ante", "ente", "ivo", "iva", "ado", "ada", "ido", "ida"];
+export const SUFIJOS_ADJETIVOS = ["oso", "osa", "ble", "al", "ante", "ente", "ivo", "iva", "ado", "ada", "ido", "ida", "ar", "er", "ir"];
 
 // --- HELPERS DE PROSODIA ---
 
@@ -123,7 +181,6 @@ export const analyzeText = (text) => {
     const wordsRaw = text.split(/\s+/);
     const pureSentences = text.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s));
     
-    // Inicialización de métricas
     const wordCounts = {};
     const rhymes = { mente: 0, cion: 0, ado_ido: 0 };
     const baulWords = new Set();
@@ -131,36 +188,59 @@ export const analyzeText = (text) => {
     const cacophonies = [];
     let adjectiveClusters = 0;
     let perceptionCount = 0;
-    let dialogueWordCount = 0;
     let passiveCount = 0;
     
-    // Nuevas Métricas
     const stickySentences = []; 
     const pleonasmsFound = []; 
     const weakAdverbs = []; 
     const sentenceStarts = { "Artículo": 0, "Preposición": 0, "Pronombre": 0, "Gerundio": 0, "Conector": 0, "Sujeto/Otro": 0 };
     const sentenceStartTimeline = []; 
-    
-    // Repeticiones Cercanas
     const closeRepetitionIndices = new Set();
     const lastPositions = {}; 
     const DISTANCE_THRESHOLD = 50;
-
-    // Incontables
-    const uncountablesFound = []; // { word, index }
-
+    const uncountablesFound = []; 
     const sensoryCounts = { sight: 0, sound: 0, touch: 0, smell_taste: 0 };
     let totalCommas = 0;
     let totalSyllables = 0;
 
-    // Análisis de Diálogo
-    const dialogueRegex = /^[—–\-―«"“]/;
+    // --- ANÁLISIS DE DIÁLOGO ---
+    const dialogueBlocks = []; 
+    let dialogueTagCount = 0;
+    let dialogueTotalWords = 0;
+    const dialogueVocabulary = new Set();
+    let dialogueWordCount = 0; 
+
     const paragraphsRaw = text.split(/\n+/);
-    paragraphsRaw.forEach(p => {
+    
+    paragraphsRaw.forEach((p, idx) => {
         const trimmed = p.trim();
         if (!trimmed) return;
-        if (dialogueRegex.test(trimmed)) {
-            dialogueWordCount += trimmed.split(/\s+/).length;
+
+        const startsWithDialogueMarker = /^[—–\-―«"“]/.test(trimmed);
+
+        if (startsWithDialogueMarker) {
+            const words = trimmed.split(/\s+/);
+            const len = words.length;
+            dialogueTotalWords += len;
+            dialogueWordCount += len;
+            
+            let tagsInBlock = 0;
+            words.forEach(w => {
+                const clean = w.toLowerCase().replace(/[.,;:!?()"«»—–\-]/g, "");
+                if (DIALOGUE_TAGS.has(clean)) tagsInBlock++;
+                if (clean.length > 3) dialogueVocabulary.add(clean);
+            });
+            
+            dialogueTagCount += tagsInBlock;
+
+            dialogueBlocks.push({
+                id: idx,
+                text: trimmed,
+                wordCount: len,
+                tagCount: tagsInBlock,
+                isMonologue: len > 40, 
+                isPingPong: len < 10   
+            });
         } else {
              const quoteMatches = trimmed.match(/([“"«][^”"»]+[”"»])/g);
              if (quoteMatches) {
@@ -171,12 +251,16 @@ export const analyzeText = (text) => {
         }
     });
 
-    // 1. Análisis de Frases (Sticky, Starts)
+    // CÁLCULO CORREGIDO DE RATIOS
+    const tagDensity = dialogueTotalWords > 0 ? Math.round((dialogueTagCount / dialogueTotalWords) * 100) : 0;
+    const dialogueLexicalRichness = dialogueTotalWords > 0 ? Math.round((dialogueVocabulary.size / dialogueTotalWords) * 100) : 0;
+    const dialogueRatio = Math.round((dialogueWordCount / wordsRaw.length) * 100);
+
+    // 1. Frases
     pureSentences.forEach((sentence, idx) => {
         const words = sentence.trim().split(/\s+/);
         if (words.length === 0) return;
 
-        // Sticky Analysis
         let glueCount = 0;
         const cleanWords = words.map(w => w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""));
         cleanWords.forEach(w => {
@@ -187,7 +271,6 @@ export const analyzeText = (text) => {
             stickySentences.push({ text: sentence, glueRatio: (glueRatio * 100).toFixed(0), index: idx });
         }
 
-        // Sentence Starts Analysis
         const firstWord = cleanWords[0];
         let startType = "Sujeto/Otro";
         if (firstWord) {
@@ -202,7 +285,7 @@ export const analyzeText = (text) => {
         }
     });
 
-    // 2. Análisis de Pleonasmos
+    // 2. Pleonasmos
     const normalizedText = text.toLowerCase();
     PLEONASMS_LIST.forEach(pleonasm => {
         if (normalizedText.includes(pleonasm)) {
@@ -210,7 +293,7 @@ export const analyzeText = (text) => {
         }
     });
 
-    // Análisis palabra por palabra
+    // 3. Palabra a palabra
     wordsRaw.forEach((word, index) => {
       const clean = word.toLowerCase().replace(/[.,;:!?()"«»—]/g, "");
       if (!clean) return;
@@ -220,8 +303,6 @@ export const analyzeText = (text) => {
 
       if (!STOPWORDS.has(clean) && clean.length > 2) {
           wordCounts[clean] = (wordCounts[clean] || 0) + 1;
-          
-          // Detección de Repeticiones Cercanas
           if (lastPositions[clean] !== undefined) {
               const dist = index - lastPositions[clean];
               if (dist < DISTANCE_THRESHOLD) {
@@ -241,23 +322,18 @@ export const analyzeText = (text) => {
           baulTimeline.push({ word: clean, position: index / wordsRaw.length });
       }
 
-      // Detección de Incontables
       if (UNCOUNTABLES.has(clean)) {
           uncountablesFound.push({ word: clean, index: index / wordsRaw.length });
       }
 
       if (VERBOS_PERCEPCION.has(clean)) perceptionCount++;
 
-      // Pasiva
-      if (clean === 'se' && index < wordsRaw.length - 1) {
-          passiveCount++; 
-      }
+      if (clean === 'se' && index < wordsRaw.length - 1) passiveCount++; 
       if ((clean === 'fue' || clean === 'fueron' || clean === 'sido') && index < wordsRaw.length - 1) {
           const next = wordsRaw[index+1] ? wordsRaw[index+1].toLowerCase() : "";
           if (next.endsWith('ado') || next.endsWith('ido')) passiveCount++;
       }
 
-      // Fuerza Verbal
       if (clean.endsWith("mente") && clean.length > 5 && index > 0) {
           const prevWord = wordsRaw[index - 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
           if (!STOPWORDS.has(prevWord) && prevWord.length > 3) {
@@ -265,7 +341,6 @@ export const analyzeText = (text) => {
           }
       }
 
-      // Cacofonías
       if (index < wordsRaw.length - 1) {
         const nextWord = wordsRaw[index + 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
         if (clean.length >= 4 && nextWord.length >= 4) {
@@ -273,7 +348,6 @@ export const analyzeText = (text) => {
         }
       }
       
-      // Adjetivos
       if (index < wordsRaw.length - 2) {
          const w2 = wordsRaw[index+1].toLowerCase().replace(/[.,;:!?]/g,"");
          const w3 = wordsRaw[index+2].toLowerCase().replace(/[.,;:!?]/g,"");
@@ -281,7 +355,6 @@ export const analyzeText = (text) => {
          if (!STOPWORDS.has(clean) && isAdj(w2) && isAdj(w3)) adjectiveClusters++;
       }
 
-      // Sensorial
       if ([...SENSORY_DICT.sight].some(s => clean.includes(s))) sensoryCounts.sight++;
       if ([...SENSORY_DICT.sound].some(s => clean.includes(s))) sensoryCounts.sound++;
       if ([...SENSORY_DICT.touch].some(s => clean.includes(s))) sensoryCounts.touch++;
@@ -299,15 +372,12 @@ export const analyzeText = (text) => {
     const avgWordsPerSentence = wordsRaw.length / pureSentences.length;
     const readabilityScore = Math.max(0, Math.min(100, Math.round(206.84 - (60 * avgSyllablesPerWord) - (1.02 * avgWordsPerSentence))));
     
-    const dialogueRatio = Math.round((dialogueWordCount / wordsRaw.length) * 100);
-
     const commasPerSentence = pureSentences.map(s => (s.match(/,/g) || []).length);
     const perceptionPerSentence = pureSentences.map(s => {
         const words = s.toLowerCase().replace(/[.,;:!?]/g, "").split(/\s+/);
         return words.filter(w => VERBOS_PERCEPCION.has(w)).length;
     });
 
-    // Timelines
     const sensoryTimeline = pureSentences.map(sentence => {
         const sWords = sentence.toLowerCase().replace(/[.,;:!?]/g, "").split(/\s+/);
         const score = { sight: 0, sound: 0, touch: 0, smell_taste: 0 };
@@ -335,7 +405,6 @@ export const analyzeText = (text) => {
         return score;
     });
 
-    // Sismógrafo Alerts
     const sismografoAlerts = []; 
     let count = 0;
     for (let i = 0; i < sentenceLengths.length; i++) {
@@ -359,7 +428,6 @@ export const analyzeText = (text) => {
     }
     if (count >= 3) sismografoAlerts.push({ type: 'flat', start: flatStart, end: sentenceLengths.length - 1 });
 
-    // Anaphora
     const anaphoraAlerts = []; 
     for (let i = 0; i < pureSentences.length - 1; i++) {
         const s1 = pureSentences[i].trim().split(/\s+/);
@@ -373,7 +441,6 @@ export const analyzeText = (text) => {
         }
     }
 
-    // Rhythm Analysis
     const rhythmAnalysis = pureSentences.map(sentence => {
         const words = sentence.trim().split(/\s+/);
         const prosodyData = words.map(w => getProsody(w)).filter(p => p !== null);
@@ -410,7 +477,7 @@ export const analyzeText = (text) => {
         return { text: sentence, prosody: prosodyData, metricCount, highlights, isHendecasyllable: metricCount === 11, isOctosyllable: metricCount === 8 };
     }).filter(x => x);
 
-    // RETORNO DEL OBJETO COMPLETO
+    // RETORNO FINAL CORREGIDO
     return {
       wordCount: wordsRaw.length,
       sentenceCount: pureSentences.length,
@@ -430,7 +497,7 @@ export const analyzeText = (text) => {
       passiveCount, 
       baulWords: [...baulWords],
       baulTimeline,
-      uncountablesFound, // Nuevo retorno
+      uncountablesFound, 
       cacophonies: [...new Set(cacophonies)],
       perceptionRatio,
       adjectiveClusters,
@@ -442,6 +509,15 @@ export const analyzeText = (text) => {
       weakAdverbs,
       sentenceStarts,
       sentenceStartTimeline,
-      closeRepetitionIndices
+      closeRepetitionIndices,
+      
+      // --- OBJETO DE DIÁLOGO (Con todos los datos que faltaban) ---
+      dialogueStats: {
+          blocks: dialogueBlocks,
+          tagDensity,
+          lexicalRichness: dialogueLexicalRichness,
+          totalWords: dialogueTotalWords,
+          dialogueRatio // Añadido aquí también para redundancia y seguridad
+      }
     };
 };
