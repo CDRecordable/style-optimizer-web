@@ -14,9 +14,9 @@ const QuickEditorPanel = ({ isOpen, onClose, text, setText, onReanalyze }) => {
 
   return (
     <>
-      {/* Overlay fondo oscuro */}
+      {/* Overlay fondo: Eliminado el blur y el color oscuro para ver el fondo */}
       <div 
-        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[59]" 
+        className="fixed inset-0 bg-transparent z-[59]" 
         onClick={onClose}
       />
 
