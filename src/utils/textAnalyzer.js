@@ -1,3 +1,5 @@
+// src/utils/textAnalyzer.js
+
 // --- DICCIONARIOS Y CONSTANTES ---
 
 export const STOPWORDS = new Set([
@@ -175,14 +177,38 @@ export const getProsody = (word) => {
 
 // --- FUNCIÓN PRINCIPAL DE ANÁLISIS ---
 
+// Helper robusto para contar palabras (CORREGIDO PARA ESPAÑOL)
+const countWords = (str) => {
+    // Regex que incluye caracteres latinos (áéíóúñü) para no romper palabras
+    const matches = str.match(/[a-zA-Z0-9À-ÿ'-]+/g); 
+    return matches ? matches.length : 0;
+}
+
 export const analyzeText = (text) => {
     if (!text || !text.trim()) return null;
 
-    const wordsRaw = text.split(/\s+/);
-    const pureSentences = text.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s));
+    // FIX: Limpieza de caracteres invisibles
+    const cleanedText = text.replace(/[\u200B-\u200D\uFEFF]/g, "") 
+                            .replace(/<\/?(h\d|p|div|br)[^>]*>/gi, " ") 
+                            .replace(/\s+/g, ' ') 
+                            .trim();
+
+    // 1. Conteo robusto con Regex Latino
+    const wordsRawClean = cleanedText.match(/[a-zA-Z0-9À-ÿ'-]+/g) || [];
+    const wordCount = wordsRawClean.length;
+    
+    // Splitter estándar de frases.
+    const pureSentences = cleanedText.split(/([.!?]+)/).filter(s => s.trim().length > 0 && !/^[.!?]+$/.test(s));
     
     const wordCounts = {};
     const rhymes = { mente: 0, cion: 0, ado_ido: 0 };
+    
+    // --- NUEVAS LISTAS PARA VICIOS ---
+    const cionWords = []; 
+    const menteWords = []; 
+    const viciosTimeline = []; 
+    // ---------------------------------
+
     const baulWords = new Set();
     const baulTimeline = []; 
     const cacophonies = [];
@@ -210,7 +236,7 @@ export const analyzeText = (text) => {
     const dialogueVocabulary = new Set();
     let dialogueWordCount = 0; 
 
-    const paragraphsRaw = text.split(/\n+/);
+    const paragraphsRaw = cleanedText.split(/\n+/);
     
     paragraphsRaw.forEach((p, idx) => {
         const trimmed = p.trim();
@@ -219,7 +245,7 @@ export const analyzeText = (text) => {
         const startsWithDialogueMarker = /^[—–\-―«"“]/.test(trimmed);
 
         if (startsWithDialogueMarker) {
-            const words = trimmed.split(/\s+/);
+            const words = trimmed.split(/\s+/).filter(w => w.length > 0);
             const len = words.length;
             dialogueTotalWords += len;
             dialogueWordCount += len;
@@ -245,28 +271,30 @@ export const analyzeText = (text) => {
              const quoteMatches = trimmed.match(/([“"«][^”"»]+[”"»])/g);
              if (quoteMatches) {
                  quoteMatches.forEach(match => {
-                     dialogueWordCount += match.split(/\s+/).length;
+                     dialogueWordCount += countWords(match);
                  });
             }
         }
     });
 
-    // CÁLCULO CORREGIDO DE RATIOS
+    // CÁLCULO RATIOS
     const tagDensity = dialogueTotalWords > 0 ? Math.round((dialogueTagCount / dialogueTotalWords) * 100) : 0;
     const dialogueLexicalRichness = dialogueTotalWords > 0 ? Math.round((dialogueVocabulary.size / dialogueTotalWords) * 100) : 0;
-    const dialogueRatio = Math.round((dialogueWordCount / wordsRaw.length) * 100);
+    const dialogueRatio = wordCount > 0 ? Math.round((dialogueWordCount / wordCount) * 100) : 0; 
 
     // 1. Frases
     pureSentences.forEach((sentence, idx) => {
-        const words = sentence.trim().split(/\s+/);
-        if (words.length === 0) return;
+        const len = countWords(sentence); 
+        if (len === 0) return;
 
+        const words = sentence.trim().split(/\s+/).filter(w => w.length > 0);
+        
         let glueCount = 0;
         const cleanWords = words.map(w => w.toLowerCase().replace(/[.,;:!?()"«»]/g, ""));
         cleanWords.forEach(w => {
             if (STOPWORDS.has(w)) glueCount++;
         });
-        const glueRatio = words.length > 3 ? (glueCount / words.length) : 0;
+        const glueRatio = len > 3 ? (glueCount / len) : 0;
         if (glueRatio > 0.45) {
             stickySentences.push({ text: sentence, glueRatio: (glueRatio * 100).toFixed(0), index: idx });
         }
@@ -286,15 +314,15 @@ export const analyzeText = (text) => {
     });
 
     // 2. Pleonasmos
-    const normalizedText = text.toLowerCase();
+    const normalizedText = cleanedText.toLowerCase();
     PLEONASMS_LIST.forEach(pleonasm => {
         if (normalizedText.includes(pleonasm)) {
             pleonasmsFound.push(pleonasm);
         }
     });
 
-    // 3. Palabra a palabra
-    wordsRaw.forEach((word, index) => {
+    // 3. Palabra a palabra (Usando el array limpio con tildes)
+    wordsRawClean.forEach((word, index) => {
       const clean = word.toLowerCase().replace(/[.,;:!?()"«»—]/g, "");
       if (!clean) return;
 
@@ -313,44 +341,55 @@ export const analyzeText = (text) => {
           lastPositions[clean] = index;
       }
 
-      if (clean.endsWith("mente")) rhymes.mente++;
-      if (clean.endsWith("ción") || clean.endsWith("cion")) rhymes.cion++;
+      // --- DETECCIÓN DE VICIOS (FIX: AÑADIDO) ---
+      if (clean.endsWith("mente")) {
+          rhymes.mente++;
+          menteWords.push(clean);
+          viciosTimeline.push({ id: index, type: 'mente', word: clean, position: (index / wordsRawClean.length) * 100 });
+      }
+      if (clean.endsWith("ción") || clean.endsWith("cion")) {
+          rhymes.cion++;
+          cionWords.push(clean);
+          viciosTimeline.push({ id: index, type: 'cion', word: clean, position: (index / wordsRawClean.length) * 100 });
+      }
+      // ------------------------------------------
+
       if (clean.endsWith("ado") || clean.endsWith("ido")) rhymes.ado_ido++;
       
       if (PALABRAS_BAUL.has(clean)) {
           baulWords.add(clean);
-          baulTimeline.push({ word: clean, position: index / wordsRaw.length });
+          baulTimeline.push({ word: clean, position: index / wordsRawClean.length });
       }
 
       if (UNCOUNTABLES.has(clean)) {
-          uncountablesFound.push({ word: clean, index: index / wordsRaw.length });
+          uncountablesFound.push({ word: clean, index: index / wordsRawClean.length });
       }
 
       if (VERBOS_PERCEPCION.has(clean)) perceptionCount++;
 
-      if (clean === 'se' && index < wordsRaw.length - 1) passiveCount++; 
-      if ((clean === 'fue' || clean === 'fueron' || clean === 'sido') && index < wordsRaw.length - 1) {
-          const next = wordsRaw[index+1] ? wordsRaw[index+1].toLowerCase() : "";
+      if (clean === 'se' && index < wordsRawClean.length - 1) passiveCount++; 
+      if ((clean === 'fue' || clean === 'fueron' || clean === 'sido') && index < wordsRawClean.length - 1) {
+          const next = wordsRawClean[index+1] ? wordsRawClean[index+1].toLowerCase() : "";
           if (next.endsWith('ado') || next.endsWith('ido')) passiveCount++;
       }
 
       if (clean.endsWith("mente") && clean.length > 5 && index > 0) {
-          const prevWord = wordsRaw[index - 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
+          const prevWord = wordsRawClean[index - 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
           if (!STOPWORDS.has(prevWord) && prevWord.length > 3) {
               weakAdverbs.push(`${prevWord} ${clean}`);
           }
       }
 
-      if (index < wordsRaw.length - 1) {
-        const nextWord = wordsRaw[index + 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
+      if (index < wordsRawClean.length - 1) {
+        const nextWord = wordsRawClean[index + 1].toLowerCase().replace(/[.,;:!?()"«»]/g, "");
         if (clean.length >= 4 && nextWord.length >= 4) {
            if (clean.slice(-2) === nextWord.slice(0, 2)) cacophonies.push(`${clean} ${nextWord}`);
         }
       }
       
-      if (index < wordsRaw.length - 2) {
-         const w2 = wordsRaw[index+1].toLowerCase().replace(/[.,;:!?]/g,"");
-         const w3 = wordsRaw[index+2].toLowerCase().replace(/[.,;:!?]/g,"");
+      if (index < wordsRawClean.length - 2) {
+         const w2 = wordsRawClean[index+1].toLowerCase().replace(/[.,;:!?]/g,"");
+         const w3 = wordsRawClean[index+2].toLowerCase().replace(/[.,;:!?]/g,"");
          const isAdj = (w) => SUFIJOS_ADJETIVOS.some(s => w.endsWith(s));
          if (!STOPWORDS.has(clean) && isAdj(w2) && isAdj(w3)) adjectiveClusters++;
       }
@@ -364,18 +403,28 @@ export const analyzeText = (text) => {
     });
 
     const sortedRepetitions = Object.entries(wordCounts).sort((a, b) => b[1] - a[1]).filter(([_, c]) => c > 1).slice(0, 10);
-    const sentenceLengths = pureSentences.map(s => s.trim().split(/\s+/).length);
-    const perceptionRatio = Math.min(100, Math.round(((perceptionCount / wordsRaw.length) * 100) * 10) / 10);
+    const sentenceLengths = pureSentences.map(s => countWords(s));
+    
+    const perceptionRatio = Math.min(100, Math.round(((perceptionCount / wordCount) * 100) * 10) / 10);
     const punctuationDensity = pureSentences.length > 0 ? Math.round((totalCommas / pureSentences.length) * 10) / 10 : 0;
 
-    const avgSyllablesPerWord = totalSyllables / wordsRaw.length;
-    const avgWordsPerSentence = wordsRaw.length / pureSentences.length;
+    const avgSyllablesPerWord = totalSyllables / wordCount;
+    const avgWordsPerSentence = wordCount / pureSentences.length;
     const readabilityScore = Math.max(0, Math.min(100, Math.round(206.84 - (60 * avgSyllablesPerWord) - (1.02 * avgWordsPerSentence))));
     
     const commasPerSentence = pureSentences.map(s => (s.match(/,/g) || []).length);
+    
+    // FIX CRÍTICO: Cambiado 'sWords' por 'words'
     const perceptionPerSentence = pureSentences.map(s => {
         const words = s.toLowerCase().replace(/[.,;:!?]/g, "").split(/\s+/);
-        return words.filter(w => VERBOS_PERCEPCION.has(w)).length;
+        const score = { sight: 0, sound: 0, touch: 0, smell_taste: 0 };
+        words.forEach(w => { // <--- AQUÍ ESTABA EL ERROR
+            if ([...SENSORY_DICT.sight].some(s => w.includes(s))) score.sight++;
+            if ([...SENSORY_DICT.sound].some(s => w.includes(s))) score.sound++;
+            if ([...SENSORY_DICT.touch].some(s => w.includes(s))) score.touch++;
+            if ([...SENSORY_DICT.smell_taste].some(s => w.includes(s))) score.smell_taste++;
+        });
+        return score;
     });
 
     const sensoryTimeline = pureSentences.map(sentence => {
@@ -477,9 +526,9 @@ export const analyzeText = (text) => {
         return { text: sentence, prosody: prosodyData, metricCount, highlights, isHendecasyllable: metricCount === 11, isOctosyllable: metricCount === 8 };
     }).filter(x => x);
 
-    // RETORNO FINAL CORREGIDO
+    // RETORNO FINAL
     return {
-      wordCount: wordsRaw.length,
+      wordCount,
       sentenceCount: pureSentences.length,
       repetitions: sortedRepetitions, 
       rhymes,
@@ -503,7 +552,7 @@ export const analyzeText = (text) => {
       adjectiveClusters,
       rhythmAnalysis,
       rawText: text,
-      avgSentenceLength: pureSentences.length > 0 ? (wordsRaw.length / pureSentences.length).toFixed(1) : 0,
+      avgSentenceLength: pureSentences.length > 0 ? (wordCount / pureSentences.length).toFixed(1) : 0,
       stickySentences,
       pleonasmsFound,
       weakAdverbs,
@@ -511,13 +560,18 @@ export const analyzeText = (text) => {
       sentenceStartTimeline,
       closeRepetitionIndices,
       
-      // --- OBJETO DE DIÁLOGO (Con todos los datos que faltaban) ---
+      // --- EXPORTAMOS VICIOS Y TIMELINE ---
+      cionWords, 
+      menteWords,
+      viciosTimeline,
+      
+      // --- OBJETO DE DIÁLOGO ---
       dialogueStats: {
           blocks: dialogueBlocks,
           tagDensity,
           lexicalRichness: dialogueLexicalRichness,
           totalWords: dialogueTotalWords,
-          dialogueRatio // Añadido aquí también para redundancia y seguridad
+          dialogueRatio
       }
     };
 };

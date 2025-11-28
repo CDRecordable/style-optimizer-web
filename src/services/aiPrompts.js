@@ -1,3 +1,5 @@
+// src/services/aiPrompts.js
+
 // Definición de Tonos
 export const TONES = {
     MINIMALIST: 'minimalist', // Carver/Hemingway
@@ -111,67 +113,70 @@ export const PROMPT_MATRICES = {
     }
 };
 
+/**
+ * EXPORTACIONES ESPECÍFICAS
+ */
+
+export const PROMPT_ARCHAISMS = (text) => `Actúa como un lingüista experto. Analiza el siguiente texto en busca de arcaísmos, palabras en desuso o léxico innecesariamente complejo.
+        
+Texto: "${text}"
+
+IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido con este formato exacto, sin texto antes ni después:
+{
+    "archaisms": [
+        { "word": "palabra_detectada", "suggestion": "sinónimo_moderno", "reason": "breve explicación" }
+    ]
+}
+Si no encuentras ninguno, devuelve: { "archaisms": [] }`;
+
+export const PROMPT_SHOW_DONT_TELL = (text) => `Actúa como un editor literario experto en la técnica 'Show, Don't Tell'.
+Analiza el siguiente texto y detecta frases donde el autor 'cuenta' (resume, etiqueta emociones, usa verbos de percepción abstractos) en lugar de 'mostrar' (acciones, sentidos, pruebas físicas).
+
+Texto: "${text}"
+
+IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido con este formato exacto:
+{
+    "issues": [
+        { 
+            "quote": "fragmento exacto del texto original", 
+            "issue": "explicación breve de por qué es Telling", 
+            "suggestion": "reescritura en modo Showing" 
+        }
+    ]
+}
+Si el texto es perfecto, devuelve: { "issues": [] }`;
+
+export const PROMPT_REPETITIONS_NEARBY = (text) => `
+    Eres un experto editor de estilo. Analiza el siguiente texto y detecta **repeticiones de palabras (sustantivos, verbos, adjetivos) que estén a menos de 15 palabras de distancia entre sí**. Ignora artículos y preposiciones comunes (el, la, de, en, que, y...).
+
+    IMPORTANTE:
+    1. Devuelve SOLAMENTE un array JSON válido.
+    2. Usa comillas dobles (") para todas las claves y valores.
+    3. Si el texto original contiene comillas, escápalas correctamente.
+    4. No incluyas texto antes ni después del JSON.
+
+    Formato JSON requerido:
+    [
+      {
+        "segment": "El fragmento exacto del texto donde ocurre la repetición...",
+        "word": "palabra_repetida",
+        "suggestion": "Sugerencia para reescribir la frase"
+      }
+    ]
+
+    Si no hay repeticiones molestas, devuelve: []
+
+    TEXTO:
+    "${text}"
+`;
+
 // Función helper para construir el prompt final
 export const getPrompt = (componentId, tone, userText) => {
     const instruction = PROMPT_MATRICES[componentId]?.[tone] || "Mejora este texto.";
     
-    // CASO 1: ARCAÍSMOS (Salida JSON Estricta)
-    if (componentId === 'detail-archaisms') {
-        return `Actúa como un lingüista experto. Analiza el siguiente texto en busca de ${instruction}.
-        
-        Texto: "${userText}"
-        
-        IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido con este formato exacto, sin texto antes ni después:
-        {
-            "archaisms": [
-                { "word": "palabra_detectada", "suggestion": "sinónimo_moderno", "reason": "breve explicación" }
-            ]
-        }
-        Si no encuentras ninguno, devuelve array vacío.`;
-    }
+    if (componentId === 'detail-archaisms') return PROMPT_ARCHAISMS(userText);
+    if (componentId === 'detail-senses') return `Actúa como un crítico literario experto. Analiza (NO reescribas) el equilibrio sensorial. Texto: "${userText}"`;
+    if (componentId === 'detail-showtell') return PROMPT_SHOW_DONT_TELL(userText);
 
-    // CASO 2: ANÁLISIS SENSORIAL (Informe, no reescritura)
-    if (componentId === 'detail-senses') {
-        return `Actúa como un crítico literario experto.
-        Tu tarea es analizar (NO reescribir) el equilibrio sensorial del siguiente texto.
-        Instrucción: ${instruction}
-        
-        Texto a analizar:
-        "${userText}"
-        
-        Devuelve un informe breve (máximo 3 frases) con tus conclusiones.`;
-    }
-
-    // CASO: SHOW VS TELL (JSON MODE)
-    if (componentId === 'detail-showtell') {
-        return `Actúa como un editor literario experto en la técnica 'Show, Don't Tell'.
-        Analiza el siguiente texto y detecta frases donde el autor 'cuenta' (resume, etiqueta emociones, usa verbos de percepción abstractos) en lugar de 'mostrar' (acciones, sentidos, pruebas físicas).
-        
-        Texto: "${userText}"
-        
-        IMPORTANTE: Tu respuesta debe ser EXCLUSIVAMENTE un objeto JSON válido con este formato exacto:
-        {
-            "issues": [
-                { 
-                    "quote": "fragmento exacto del texto original", 
-                    "issue": "explicación breve de por qué es Telling", 
-                    "suggestion": "reescritura en modo Showing" 
-                }
-            ]
-        }
-        Si el texto es perfecto, devuelve array vacío.`;
-    }
-
-    // CASO 3: RESTO DE HERRAMIENTAS (Reescritura Estándar)
-    return `Actúa como un editor experto con un estilo ${tone} (${tone === 'minimalist' ? 'tipo Hemingway, directo y seco' : tone === 'literary' ? 'tipo Proust o García Márquez, rico y evocador' : 'corporativo, eficaz y neutral'}).
-
-Tarea: ${instruction}
-
-Texto a editar:
-"${userText}"
-
-IMPORTANTE:
-1. Solo devuelve el texto reescrito. 
-2. No añadas comillas al inicio ni al final si no son diálogo.
-3. No des explicaciones ("Aquí tienes la versión..."). Solo el resultado.`;
+    return `Actúa como un editor experto con un estilo ${tone}. Tarea: ${instruction}. Texto: "${userText}". Devuelve solo el texto reescrito.`;
 };

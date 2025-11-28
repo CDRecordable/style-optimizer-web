@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Activity, Repeat, Mic2, AlertTriangle, Feather, Eye, Type, 
   Music, Zap, Layers, PauseCircle, RefreshCcw, MessageSquare, Gauge, 
   UserX, Printer, Globe, Youtube, Edit, Package, Hash, StickyNote, Trash2,
   PieChart as PieChartIcon, Fingerprint, Crown, LogOut, Settings, User, ChevronDown,
-  Sparkles, ArrowRight, Check, X, Lock, PenTool, CreditCard 
+  Sparkles, ArrowRight, Check, X, Lock, PenTool, CreditCard, ChevronLeft, FilePlus
 } from 'lucide-react';
 
 // --- CONTEXTOS ---
 import { AppProvider, useAppContext } from './context/AppContext';
 import { UserProvider, useUserContext } from './context/UserContext';
+import { DocumentProvider, useDocument } from './context/DocumentContext';
 
 // --- UTILIDADES ---
 import { analyzeText } from './utils/textAnalyzer';
@@ -21,13 +22,18 @@ import { DashboardCard, MetricCard, ComparisonCard } from './components/common/S
 import AIConfigModal from './components/common/AIConfigModal';
 import AuthModal from './components/auth/AuthModal';
 import PaywallModal from './components/common/PaywallModal';
-import QuickEditorPanel from './components/common/QuickEditorPanel'; // <--- QuickEditorPanel añadido
+import QuickEditorPanel from './components/common/QuickEditorPanel';
+import RichTextEditor from './components/common/RichTextEditor';
+import FileSidebar from './components/common/FileSidebar';
 
 // --- VISTAS ---
 import ComparisonView from './components/dashboard/ComparisonView';
 import AdminDashboard from './components/admin/AdminDashboard';
+// --- NUEVOS COMPONENTES DE GRÁFICO (Importados para renderDashboard) ---
+import SismografoChart from './components/dashboard/SismografoChart';
+import StartsPieChart from './components/dashboard/StartsPieChart';
 
-// --- VISTAS DE DETALLE ---
+// --- VISTAS DE DETALLE (Bloque Limpio) ---
 import DetailProsody from './components/details/DetailProsody';
 import DetailPassive from './components/details/DetailPassive';
 import DetailReadability from './components/details/DetailReadability';
@@ -54,14 +60,20 @@ import DetailArchaisms from './components/details/DetailArchaisms';
 function StyleOptimizerApp() {
   const { tone, updateTone } = useAppContext();
   const { isPremium, upgradeToPremium, logout, user } = useUserContext();
+  
+  // Función auxiliar para extraer texto plano del HTML para el análisis
+  const getPlainText = (html) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    return tempDiv.innerText || tempDiv.textContent || "";
+  };
 
-  const [mode, setMode] = useState('single');
+  // --- ESTADO GLOBAL (PERSISTENCIA Y ARCHIVOS) ---
+  const { docContent, setDocContent, createNewDocument, docTitle, updateTitle } = useDocument();
+
   const [viewMode, setViewMode] = useState('input'); 
   
-  const [textV1, setTextV1] = useState("");
   const [analysisV1, setAnalysisV1] = useState(null);
-  const [textV2, setTextV2] = useState("");
-  const [analysisV2, setAnalysisV2] = useState(null);
   
   // ESTADOS MODALES Y PANELES
   const [showConfigModal, setShowConfigModal] = useState(false);
@@ -70,7 +82,19 @@ function StyleOptimizerApp() {
   const [showPaywallModal, setShowPaywallModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const [showEditor, setShowEditor] = useState(false); // <--- Estado del editor
+  const [showEditor, setShowEditor] = useState(false);
+
+  // --- EFECTO DE SINCRONIZACIÓN ---
+  useEffect(() => {
+    if (viewMode === 'dashboard' && docContent && analysisV1) {
+        const timer = setTimeout(() => {
+            const plainText = getPlainText(docContent);
+            const result = analyzeText(plainText);
+            setAnalysisV1(result);
+        }, 800);
+        return () => clearTimeout(timer);
+    }
+  }, [docContent, viewMode]);
 
   // --- HANDLERS ---
   const handleAnalyze = () => {
@@ -78,22 +102,37 @@ function StyleOptimizerApp() {
         setShowAuthModal(true); 
         return;
     }
-    if (!textV1.trim()) return;
-    const result1 = analyzeText(textV1);
-    setAnalysisV1(result1);
 
-    if (mode === 'compare' && textV2.trim()) {
-        const result2 = analyzeText(textV2);
-        setAnalysisV2(result2);
+    try {
+        const plainText = getPlainText(docContent);
+    
+        if (!plainText.trim()) return;
+    
+        const result1 = analyzeText(plainText); // <--- Aquí falla si la data es corrupta
+        setAnalysisV1(result1);
+        
+        console.log("Análisis exitoso. Mostrando dashboard."); // Éxito
+        
+        setViewMode("dashboard");
+        window.scrollTo(0,0);
+        
+    } catch (error) {
+        // ERROR CRÍTICO: Muestra qué línea del analyzeText está fallando
+        console.error("ERROR CRÍTICO DURANTE EL ANÁLISIS:", error); 
+        alert("Error al procesar el texto. Por favor, revisa la consola para ver el fallo de sintaxis.");
+        // Opcional: setViewMode("input"); para volver al editor
     }
-    setViewMode("dashboard");
+};
+
+  // Volver al editor SIN borrar nada (Navegación segura)
+  const handleBackToEditor = () => {
+      setViewMode("input");
   };
 
-  const handleReset = () => {
+  // Crear nuevo archivo (Borrado destructivo con confirmación, gestionado por contexto)
+  const handleNewFile = () => {
+      createNewDocument();
       setAnalysisV1(null);
-      setAnalysisV2(null);
-      setTextV1("");
-      setTextV2("");
       setViewMode("input");
   };
 
@@ -128,7 +167,7 @@ function StyleOptimizerApp() {
 
   const renderDetailView = () => {
       const ActiveComponent = DETAIL_COMPONENTS[viewMode];
-      const activeAnalysis = (mode === 'compare' && analysisV2) ? analysisV2 : analysisV1;
+      const activeAnalysis = analysisV1;
       if (ActiveComponent && activeAnalysis) {
           return <ActiveComponent analysis={activeAnalysis} onBack={() => setViewMode("dashboard")} />;
       }
@@ -189,35 +228,62 @@ function StyleOptimizerApp() {
   };
 
   const renderDashboard = () => {
-      const currentData = (mode === 'compare' && analysisV2) ? analysisV2 : analysisV1;
-      return (
+    const currentData = analysisV1;
+
+    if (!currentData || !currentData.wordCount) {
+        return <div className="text-center p-10 text-gray-500">Cargando análisis o documento vacío...</div>;
+    }
+
+    return (
         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            {mode === 'compare' && analysisV2 && <ComparisonView analysisV1={analysisV1} analysisV2={analysisV2} />}
-            
+            {/* --- BARRA SUPERIOR DASHBOARD --- */}
+            <div className="flex justify-between items-center mb-6">
+                <button 
+                    onClick={handleBackToEditor}
+                    className="flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-800 transition px-4 py-2 rounded-lg hover:bg-indigo-50"
+                >
+                    <ChevronLeft size={20} /> Volver al Editor
+                </button>
+            </div>
+
+            {/* 1. SECCIÓN DE MÉTRICAS BÁSICAS */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <MetricCard icon={<Type />} label="Palabras" value={currentData.wordCount} color="blue" />
                 <MetricCard icon={<BookOpen />} label="Frases" value={currentData.sentenceCount} color="indigo" />
                 <MetricCard icon={<Activity />} label="Tiempo Lectura" value={`~${Math.ceil(currentData.wordCount / 250)} min`} color="teal" subtext="Velocidad media" />
             </section>
 
+            {/* 2. SISMÓGRAFO EN FILA COMPLETA (Visualización Horizontal) */}
+            <section>
+                <SismografoChart 
+                    analysis={currentData} 
+                    onViewDetail={() => setViewMode('detail-sismografo')}
+                />
+            </section>
+
+            {/* 3. RITMO Y SINTAXIS */}
             <section className="space-y-6">
                 <h3 className="text-2xl font-black text-slate-700 flex items-center gap-3 mb-8 pb-3 border-b-4 border-slate-200 uppercase tracking-wider">
                     <Activity className="text-indigo-500" /> Ritmo y Sintaxis
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <DashboardCard title="Sismógrafo" icon={<Activity />} onViewDetail={() => setViewMode('detail-sismografo')}>
-                        <div className="text-center py-2"><span className="text-3xl font-bold text-indigo-600">{currentData.sentenceLengths.length}</span><p className="text-xs text-gray-400">frases analizadas</p></div>
-                    </DashboardCard>
+                    
+                    {/* Tarjeta de Prosodia */}
                     <DashboardCard title="Prosodia" icon={<Mic2 />} onViewDetail={() => setViewMode('detail-prosody')}>
                         <div className="text-center py-2"><span className="text-xs text-gray-400">Análisis de acentuación y métrica</span></div>
                     </DashboardCard>
+
+                    {/* Tarjetas de Métrica restantes para Ritmo y Sintaxis */}
                     <MetricCard icon={<PauseCircle />} label="Puntuación" value={currentData.punctuationDensity} color="orange" subtext="Comas por frase" onClick={() => setViewMode('detail-punctuation')} />
                     <MetricCard icon={<Gauge />} label="Legibilidad" value={currentData.readabilityScore} color="teal" onClick={() => setViewMode('detail-readability')} />
-                    <MetricCard icon={<RefreshCcw />} label="Anáforas" value={currentData.anaphoraAlerts.length} color="teal" onClick={() => setViewMode('detail-anaphora')} />
-                    <MetricCard icon={<PieChartIcon />} label="Variedad Inicio" value="Analizar" color="blue" onClick={() => setViewMode('detail-starts')} />
+
+                    {/* GRÁFICO VARIACIÓN DE INICIO (Tarta) - Debe ir al final de esta sección */}
+                    <StartsPieChart analysis={currentData} />
+                    
                 </div>
             </section>
 
+            {/* 4. ESTILO Y VOCABULARIO (NUEVA SECCIÓN RESTAURADA) */}
             <section className="space-y-6">
                 <h3 className="text-2xl font-black text-slate-700 flex items-center gap-3 mb-8 pb-3 border-b-4 border-purple-200 uppercase tracking-wider text-purple-800">
                     <Feather className="text-purple-500" /> Estilo y Vocabulario
@@ -225,8 +291,10 @@ function StyleOptimizerApp() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     
-                    {/* --- TARJETA HERO 1: ARCAÍSMOS (PRO) --- */}
-                    <div className="relative group col-span-1 row-span-1 md:col-span-2 lg:col-span-1">
+                    {/* --- TARJETAS PRO EN POSICIÓN DESTACADA (PRIMERAS TARJETAS) --- */}
+                    
+                    {/* Detector de Arcaísmos (PRO) */}
+                    <div className="relative group col-span-1 row-span-1 lg:col-span-1">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl opacity-75 blur group-hover:opacity-100 transition duration-200"></div>
                         <div className="relative bg-white p-5 rounded-xl flex flex-col h-full border border-gray-100 shadow-sm">
                             <div className="flex justify-between items-start mb-3">
@@ -248,8 +316,8 @@ function StyleOptimizerApp() {
                         </div>
                     </div>
 
-                    {/* --- TARJETA HERO 2: SHOW VS TELL (PRO) --- */}
-                    <div className="relative group col-span-1 row-span-1 md:col-span-2 lg:col-span-1">
+                    {/* Show, Don't Tell (PRO) */}
+                    <div className="relative group col-span-1 row-span-1 lg:col-span-1">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-emerald-600 rounded-xl opacity-75 blur group-hover:opacity-100 transition duration-200"></div>
                         <div className="relative bg-white p-5 rounded-xl flex flex-col h-full border border-gray-100 shadow-sm">
                             <div className="flex justify-between items-start mb-3">
@@ -270,8 +338,21 @@ function StyleOptimizerApp() {
                             </button>
                         </div>
                     </div>
+                    
+                    {/* --- RESTO DE MÉTRICAS DE ESTILO Y VOCABULARIO --- */}
+                    
+                    {/* NEW: Vicios (-ción / -mente) */}
+                    <MetricCard 
+                        icon={<Zap />} 
+                        label="Vicios (-ción / -mente)" 
+                        value={ (currentData.cionWords?.length || 0) + (currentData.menteWords?.length || 0) } 
+                        color="red" 
+                        subtext="Revisar ahora"
+                        onClick={() => setViewMode('detail-metrics')} 
+                    />
 
-                    {/* --- TARJETAS ESTÁNDAR --- */}
+                    {/* Antiguas métricas (Incluye la antigua "Densidad - Ver Mapa") */}
+                    <MetricCard icon={<RefreshCcw />} label="Anáforas" value={currentData.anaphoraAlerts.length} color="teal" onClick={() => setViewMode('detail-anaphora')} />
                     <MetricCard icon={<Layers />} label="Densidad" value="Ver Mapa" color="purple" onClick={() => setViewMode('detail-metrics')} />
                     <MetricCard icon={<StickyNote />} label="Frases Pegajosas" value={currentData.stickySentences.length} color="red" onClick={() => setViewMode('detail-sticky')} />
                     <MetricCard icon={<Repeat />} label="Repeticiones" value={currentData.repetitions.length} color="blue" onClick={() => setViewMode('detail-repetitions')} />
@@ -283,6 +364,7 @@ function StyleOptimizerApp() {
                     <MetricCard icon={<Fingerprint />} label="Sensorium" value="Ver Mapa" color="teal" onClick={() => setViewMode('detail-senses')} />
                     <MetricCard icon={<UserX />} label="Voz Pasiva" value={currentData.passiveCount} color="gray" onClick={() => setViewMode('detail-passive')} />
                     <MetricCard icon={<MessageSquare />} label="Diálogo" value={`${currentData.dialogueRatio}%`} color="blue" onClick={() => setViewMode('detail-dialogue')} />
+
                 </div>
             </section>
         </div>
@@ -322,46 +404,68 @@ function StyleOptimizerApp() {
         );
     }
 
+    // --- NUEVO LAYOUT CON SIDEBAR ---
     return (
-      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-          <div className="text-center py-8">
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-3">{mode === 'compare' ? 'Comparador de Versiones' : 'Analizador de Estilo Literario'}</h2>
-              <p className="text-gray-500 max-w-lg mx-auto text-lg">{mode === 'compare' ? 'Mide tu progreso científicamente.' : 'Diagnóstico profundo de ritmo y estilo.'}</p>
-          </div>
+      // 1. Contenedor principal que define el área de trabajo (flex-col para organizar verticalmente)
+      <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 h-[calc(100vh-140px)] flex flex-col">
           
-          <div className={`grid gap-8 transition-all duration-500 ${mode === 'compare' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col h-96 relative group">
-                <div className="bg-gray-50 px-6 py-3 border-b border-gray-100 flex justify-between items-center">
-                    <label className="text-sm font-bold text-gray-500 uppercase tracking-wide flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-gray-400"></div>{mode === 'compare' ? 'Original (V1)' : 'Tu Texto'}</label>
-                    <span className="text-xs text-gray-400">{textV1.length} car.</span>
-                </div>
-                <textarea 
-                    className="w-full flex-grow p-6 focus:ring-0 border-none outline-none resize-none text-lg leading-relaxed font-serif text-gray-700 placeholder-gray-300" 
-                    placeholder="Escribe o pega aquí el texto..." 
-                    value={textV1} 
-                    onChange={(e) => setTextV1(e.target.value)} 
-                />
+          {/* HEADER DE LA SECCIÓN DE ESCRITURA (NO SCROLLABLE) */}
+          <div className="flex justify-between items-center pb-2 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="bg-indigo-100 text-indigo-700 p-1.5 rounded-lg"><Edit size={18}/></span>
+                <h2 className="text-xl font-bold text-gray-800">Estudio de Escritura</h2>
               </div>
               
-              {mode === 'compare' && (
-                  <div className="bg-white rounded-2xl shadow-xl border-2 border-indigo-100 overflow-hidden flex flex-col h-96 relative">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-purple-500"></div>
-                    <div className="bg-indigo-50/50 px-6 py-3 border-b border-indigo-100 flex justify-between items-center">
-                        <label className="text-sm font-bold text-indigo-600 uppercase tracking-wide flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                            Editada (V2)
-                        </label>
-                        <span className="text-xs text-indigo-400">{textV2.length} car.</span>
-                    </div>
-                    <textarea className="w-full flex-grow p-6 focus:ring-0 border-none outline-none resize-none text-lg leading-relaxed font-serif text-gray-700 placeholder-indigo-200/50 bg-indigo-50/10" placeholder="Pega aquí la versión corregida..." value={textV2} onChange={(e) => setTextV2(e.target.value)} />
-                  </div>
-              )}
+              <div className="flex gap-3">
+                 <button onClick={handleAnalyze} disabled={!getPlainText(docContent).trim()} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-md hover:bg-indigo-700 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <Activity size={16} /> Analizar Estilo
+                </button>
+              </div>
           </div>
+          
+          {/* LAYOUT PRINCIPAL: SIDEBAR + EDITOR (CORREGIDO PARA SCROLL Y DATA) */}
+          {/* 2. Este contenedor toma el espacio vertical restante y organiza los dos paneles horizontalmente */}
+          <div className="flex h-full gap-6 items-start flex-grow">
+              
+              {/* 1. SIDEBAR DE ARCHIVOS (ALTURA COMPLETA) */}
+              <div className="w-64 flex-shrink-0 h-full rounded-2xl shadow-lg overflow-hidden border border-gray-200 hidden md:block">
+                  <FileSidebar />
+              </div>
 
-          <div className="flex justify-center pt-4 gap-4">
-            <button onClick={handleAnalyze} disabled={!textV1.trim() || (mode === 'compare' && !textV2.trim())} className="group bg-indigo-600 text-white px-10 py-4 rounded-full font-bold text-lg shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3">
-                <Activity className="w-5 h-5 group-hover:animate-pulse" /> {mode === 'compare' ? 'Comparar Versiones' : 'Analizar Texto'}
-            </button>
+              {/* 2. ÁREA DE EDICIÓN: El contenedor principal del editor debe tener un scroll visible */}
+              <div className="flex-grow flex flex-col gap-4 h-full">
+                  
+                  {/* EDITOR V1 (PRINCIPAL) */}
+                  {/* FIX FINAL DE SCROLL/DATA: Aplicamos altura FIJA a todo el contenedor del editor para garantizar el scroll */}
+                  <div className="bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col relative group h-[650px] overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-3 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
+                        {/* INPUT PARA EL TÍTULO DEL DOCUMENTO */}
+                        <div className="flex items-center gap-2 flex-grow">
+                            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                            <input 
+                                type="text" 
+                                value={docTitle}
+                                onChange={(e) => updateTitle(e.target.value)}
+                                className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 uppercase tracking-wide w-full placeholder-gray-400 p-0"
+                                placeholder="TÍTULO DEL CAPÍTULO..."
+                            />
+                        </div>
+                        <span className="text-xs text-gray-400 whitespace-nowrap ml-4">{getPlainText(docContent).length} car.</span>
+                    </div>
+                    
+                    {/* SCROLL AREA: Este div toma el espacio restante y HABILITA el scroll del ratón/barra */}
+                    <div className="flex-grow overflow-y-auto"> 
+                        <RichTextEditor 
+                            content={docContent}
+                            onChange={setDocContent}
+                            placeholder="Érase una vez..."
+                            className="border-none shadow-none rounded-none"
+                        />
+                    </div>
+                  </div>
+                  
+                  {/* ELIMINADA LA SECCIÓN DE COMPARACIÓN */}
+              </div>
           </div>
       </div>
     );
@@ -373,8 +477,9 @@ function StyleOptimizerApp() {
     <div className="min-h-screen bg-gray-50 font-sans text-gray-800 flex flex-col">
       <header className="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-4">
-            <div onClick={handleReset} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-                <div className="bg-white/10 p-2 rounded-lg"><Feather className="w-6 h-6 text-indigo-100" /></div>
+            {/* Click en logo ahora lleva al editor SIN borrar */}
+            <div onClick={handleBackToEditor} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+                <div className="bg-white/10 p-2 rounded-lg"><Feather size={20} className="text-indigo-100" /></div>
                 <div><h1 className="text-xl font-bold leading-none">Style Optimizer</h1><span className="text-xs text-indigo-300 font-medium tracking-wider">AI EDITION</span></div>
             </div>
             
@@ -396,9 +501,9 @@ function StyleOptimizerApp() {
                     )}
                 </div>
 
+                {/* BOTONES SIMPLIFICADOS: SOLO EDITOR */}
                 <div className="bg-indigo-800/50 p-1 rounded-lg flex text-xs font-medium border border-indigo-600">
-                    <button onClick={() => { setMode('single'); handleReset(); }} className={`px-3 py-1 rounded transition-all flex items-center gap-2 ${mode === 'single' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-200 hover:text-white'}`}><Edit size={14} /> Editor</button>
-                    <button onClick={() => { setMode('compare'); handleReset(); }} className={`px-3 py-1 rounded transition-all flex items-center gap-2 ${mode === 'compare' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-200 hover:text-white'}`}><Layers size={14} /> Comparar</button>
+                    <button onClick={handleBackToEditor} className="px-3 py-1 rounded transition-all flex items-center gap-2 bg-white text-indigo-700 shadow-sm"><Edit size={14} /> Editor</button>
                 </div>
 
                 {user ? (
@@ -416,7 +521,6 @@ function StyleOptimizerApp() {
                                         <p className="text-sm font-bold text-gray-800 truncate">{user.email}</p>
                                     </div>
                                     
-                                    {/* --- NUEVO: GESTIONAR SUSCRIPCIÓN (Solo para PRO) --- */}
                                     {isPremium && (
                                         <button 
                                             onClick={() => { setShowUserMenu(false); handleManageSubscription(); }}
@@ -426,7 +530,6 @@ function StyleOptimizerApp() {
                                         </button>
                                     )}
 
-                                    {/* Botón Upgrade (Solo para Free) */}
                                     {!isPremium && (
                                         <button 
                                             onClick={() => { setShowUserMenu(false); setShowPaywallModal(true); }} 
@@ -460,11 +563,12 @@ function StyleOptimizerApp() {
         {viewMode.startsWith('detail-') && renderDetailView()}
       </main>
 
+      {/* QuickEditorPanel AHORA USA EL CONTEXTO GLOBAL */}
       <QuickEditorPanel 
           isOpen={showEditor} 
           onClose={() => setShowEditor(false)}
-          text={textV1}
-          setText={setTextV1}
+          text={docContent}      // Pasamos el estado global
+          setText={setDocContent} // Pasamos el setter global
           onReanalyze={handleAnalyze} 
       />
 
@@ -474,7 +578,7 @@ function StyleOptimizerApp() {
 
       <footer className="bg-slate-900 text-slate-400 py-8 mt-12 border-t border-slate-800">
           <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-sm">Style Optimizer AI &copy; 2024</div>
+              <div className="text-sm">Style Optimizer AI &copy; 2025</div>
               <div className="flex gap-6 text-sm items-center">
                   {user && (
                       <div className="flex items-center gap-3 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
@@ -501,7 +605,9 @@ export default function App() {
     return (
         <AppProvider>
             <UserProvider>
-                <StyleOptimizerApp />
+                <DocumentProvider> {/* <--- Importante: Envolver aquí */}
+                    <StyleOptimizerApp />
+                </DocumentProvider>
             </UserProvider>
         </AppProvider>
     );
