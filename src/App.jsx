@@ -29,11 +29,11 @@ import FileSidebar from './components/common/FileSidebar';
 // --- VISTAS ---
 import ComparisonView from './components/dashboard/ComparisonView';
 import AdminDashboard from './components/admin/AdminDashboard';
-// --- NUEVOS COMPONENTES DE GRÁFICO (Importados para renderDashboard) ---
+// --- NUEVOS COMPONENTES DE GRÁFICO ---
 import SismografoChart from './components/dashboard/SismografoChart';
 import StartsPieChart from './components/dashboard/StartsPieChart';
 
-// --- VISTAS DE DETALLE (Bloque Limpio) ---
+// --- VISTAS DE DETALLE ---
 import DetailProsody from './components/details/DetailProsody';
 import DetailPassive from './components/details/DetailPassive';
 import DetailReadability from './components/details/DetailReadability';
@@ -68,11 +68,10 @@ function StyleOptimizerApp() {
     return tempDiv.innerText || tempDiv.textContent || "";
   };
 
-  // --- ESTADO GLOBAL (PERSISTENCIA Y ARCHIVOS) ---
+  // --- ESTADO GLOBAL ---
   const { docContent, setDocContent, createNewDocument, docTitle, updateTitle } = useDocument();
 
   const [viewMode, setViewMode] = useState('input'); 
-  
   const [analysisV1, setAnalysisV1] = useState(null);
   
   // ESTADOS MODALES Y PANELES
@@ -106,30 +105,32 @@ function StyleOptimizerApp() {
     try {
         const plainText = getPlainText(docContent);
     
-        if (!plainText.trim()) return;
+        if (!plainText.trim()) {
+            alert("Por favor, escribe algo antes de analizar.");
+            return;
+        }
     
-        const result1 = analyzeText(plainText); // <--- Aquí falla si la data es corrupta
-        setAnalysisV1(result1);
+        const result1 = analyzeText(plainText);
         
-        console.log("Análisis exitoso. Mostrando dashboard."); // Éxito
+        if (!result1) {
+            throw new Error("El análisis devolvió datos vacíos.");
+        }
+
+        setAnalysisV1(result1);
         
         setViewMode("dashboard");
         window.scrollTo(0,0);
         
     } catch (error) {
-        // ERROR CRÍTICO: Muestra qué línea del analyzeText está fallando
         console.error("ERROR CRÍTICO DURANTE EL ANÁLISIS:", error); 
-        alert("Error al procesar el texto. Por favor, revisa la consola para ver el fallo de sintaxis.");
-        // Opcional: setViewMode("input"); para volver al editor
+        alert("Ocurrió un error al analizar el texto. Revisa la consola para más detalles.");
     }
-};
+  };
 
-  // Volver al editor SIN borrar nada (Navegación segura)
   const handleBackToEditor = () => {
       setViewMode("input");
   };
 
-  // Crear nuevo archivo (Borrado destructivo con confirmación, gestionado por contexto)
   const handleNewFile = () => {
       createNewDocument();
       setAnalysisV1(null);
@@ -253,7 +254,7 @@ function StyleOptimizerApp() {
                 <MetricCard icon={<Activity />} label="Tiempo Lectura" value={`~${Math.ceil(currentData.wordCount / 250)} min`} color="teal" subtext="Velocidad media" />
             </section>
 
-            {/* 2. SISMÓGRAFO EN FILA COMPLETA (Visualización Horizontal) */}
+            {/* 2. SISMÓGRAFO EN FILA COMPLETA */}
             <section>
                 <SismografoChart 
                     analysis={currentData} 
@@ -268,22 +269,19 @@ function StyleOptimizerApp() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     
-                    {/* Tarjeta de Prosodia */}
                     <DashboardCard title="Prosodia" icon={<Mic2 />} onViewDetail={() => setViewMode('detail-prosody')}>
                         <div className="text-center py-2"><span className="text-xs text-gray-400">Análisis de acentuación y métrica</span></div>
                     </DashboardCard>
 
-                    {/* Tarjetas de Métrica restantes para Ritmo y Sintaxis */}
                     <MetricCard icon={<PauseCircle />} label="Puntuación" value={currentData.punctuationDensity} color="orange" subtext="Comas por frase" onClick={() => setViewMode('detail-punctuation')} />
                     <MetricCard icon={<Gauge />} label="Legibilidad" value={currentData.readabilityScore} color="teal" onClick={() => setViewMode('detail-readability')} />
 
-                    {/* GRÁFICO VARIACIÓN DE INICIO (Tarta) - Debe ir al final de esta sección */}
                     <StartsPieChart analysis={currentData} />
                     
                 </div>
             </section>
 
-            {/* 4. ESTILO Y VOCABULARIO (NUEVA SECCIÓN RESTAURADA) */}
+            {/* 4. ESTILO Y VOCABULARIO */}
             <section className="space-y-6">
                 <h3 className="text-2xl font-black text-slate-700 flex items-center gap-3 mb-8 pb-3 border-b-4 border-purple-200 uppercase tracking-wider text-purple-800">
                     <Feather className="text-purple-500" /> Estilo y Vocabulario
@@ -291,9 +289,6 @@ function StyleOptimizerApp() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     
-                    {/* --- TARJETAS PRO EN POSICIÓN DESTACADA (PRIMERAS TARJETAS) --- */}
-                    
-                    {/* Detector de Arcaísmos (PRO) */}
                     <div className="relative group col-span-1 row-span-1 lg:col-span-1">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl opacity-75 blur group-hover:opacity-100 transition duration-200"></div>
                         <div className="relative bg-white p-5 rounded-xl flex flex-col h-full border border-gray-100 shadow-sm">
@@ -316,7 +311,6 @@ function StyleOptimizerApp() {
                         </div>
                     </div>
 
-                    {/* Show, Don't Tell (PRO) */}
                     <div className="relative group col-span-1 row-span-1 lg:col-span-1">
                         <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-emerald-600 rounded-xl opacity-75 blur group-hover:opacity-100 transition duration-200"></div>
                         <div className="relative bg-white p-5 rounded-xl flex flex-col h-full border border-gray-100 shadow-sm">
@@ -339,9 +333,6 @@ function StyleOptimizerApp() {
                         </div>
                     </div>
                     
-                    {/* --- RESTO DE MÉTRICAS DE ESTILO Y VOCABULARIO --- */}
-                    
-                    {/* NEW: Vicios (-ción / -mente) */}
                     <MetricCard 
                         icon={<Zap />} 
                         label="Vicios (-ción / -mente)" 
@@ -351,7 +342,6 @@ function StyleOptimizerApp() {
                         onClick={() => setViewMode('detail-metrics')} 
                     />
 
-                    {/* Antiguas métricas (Incluye la antigua "Densidad - Ver Mapa") */}
                     <MetricCard icon={<RefreshCcw />} label="Anáforas" value={currentData.anaphoraAlerts.length} color="teal" onClick={() => setViewMode('detail-anaphora')} />
                     <MetricCard icon={<Layers />} label="Densidad" value="Ver Mapa" color="purple" onClick={() => setViewMode('detail-metrics')} />
                     <MetricCard icon={<StickyNote />} label="Frases Pegajosas" value={currentData.stickySentences.length} color="red" onClick={() => setViewMode('detail-sticky')} />
@@ -406,10 +396,9 @@ function StyleOptimizerApp() {
 
     // --- NUEVO LAYOUT CON SIDEBAR ---
     return (
-      // 1. Contenedor principal que define el área de trabajo (flex-col para organizar verticalmente)
       <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 h-[calc(100vh-140px)] flex flex-col">
           
-          {/* HEADER DE LA SECCIÓN DE ESCRITURA (NO SCROLLABLE) */}
+          {/* HEADER DE LA SECCIÓN DE ESCRITURA */}
           <div className="flex justify-between items-center pb-2 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-center gap-2">
                 <span className="bg-indigo-100 text-indigo-700 p-1.5 rounded-lg"><Edit size={18}/></span>
@@ -423,23 +412,20 @@ function StyleOptimizerApp() {
               </div>
           </div>
           
-          {/* LAYOUT PRINCIPAL: SIDEBAR + EDITOR (CORREGIDO PARA SCROLL Y DATA) */}
-          {/* 2. Este contenedor toma el espacio vertical restante y organiza los dos paneles horizontalmente */}
+          {/* LAYOUT PRINCIPAL */}
           <div className="flex h-full gap-6 items-start flex-grow">
               
-              {/* 1. SIDEBAR DE ARCHIVOS (ALTURA COMPLETA) */}
+              {/* 1. SIDEBAR DE ARCHIVOS */}
               <div className="w-64 flex-shrink-0 h-full rounded-2xl shadow-lg overflow-hidden border border-gray-200 hidden md:block">
                   <FileSidebar />
               </div>
 
-              {/* 2. ÁREA DE EDICIÓN: El contenedor principal del editor debe tener un scroll visible */}
+              {/* 2. ÁREA DE EDICIÓN */}
               <div className="flex-grow flex flex-col gap-4 h-full">
                   
-                  {/* EDITOR V1 (PRINCIPAL) */}
-                  {/* FIX FINAL DE SCROLL/DATA: Aplicamos altura FIJA a todo el contenedor del editor para garantizar el scroll */}
+                  {/* EDITOR V1 */}
                   <div className="bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col relative group h-[650px] overflow-hidden">
                     <div className="bg-gray-50 px-6 py-3 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
-                        {/* INPUT PARA EL TÍTULO DEL DOCUMENTO */}
                         <div className="flex items-center gap-2 flex-grow">
                             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
                             <input 
@@ -453,7 +439,6 @@ function StyleOptimizerApp() {
                         <span className="text-xs text-gray-400 whitespace-nowrap ml-4">{getPlainText(docContent).length} car.</span>
                     </div>
                     
-                    {/* SCROLL AREA: Este div toma el espacio restante y HABILITA el scroll del ratón/barra */}
                     <div className="flex-grow overflow-y-auto"> 
                         <RichTextEditor 
                             content={docContent}
@@ -464,7 +449,6 @@ function StyleOptimizerApp() {
                     </div>
                   </div>
                   
-                  {/* ELIMINADA LA SECCIÓN DE COMPARACIÓN */}
               </div>
           </div>
       </div>
@@ -484,9 +468,6 @@ function StyleOptimizerApp() {
             </div>
             
             <div className="flex items-center gap-3">
-                {user && viewMode !== 'input' && (
-                    <button onClick={() => setShowEditor(!showEditor)} className={`p-2 rounded-lg border transition-colors ${showEditor ? 'bg-white text-indigo-600 border-white' : 'bg-indigo-800/50 text-indigo-200 border-indigo-600 hover:text-white'}`} title="Abrir Editor Rápido"><PenTool size={18} /></button>
-                )}
                 <button onClick={() => setShowConfigModal(true)} className="p-2 bg-indigo-800/50 hover:bg-indigo-800 rounded-lg border border-indigo-600 text-indigo-200 hover:text-white transition-colors"><Settings size={18} /></button>
 
                 <div className="relative">
@@ -501,15 +482,26 @@ function StyleOptimizerApp() {
                     )}
                 </div>
 
-                {/* BOTONES SIMPLIFICADOS: SOLO EDITOR */}
-                <div className="bg-indigo-800/50 p-1 rounded-lg flex text-xs font-medium border border-indigo-600">
+                {/* BOTONES SIMPLIFICADOS Y AGRUPADOS: EDITOR Y QUICK EDITOR */}
+                <div className="bg-indigo-800/50 p-1 rounded-lg flex items-center gap-1 text-xs font-medium border border-indigo-600">
                     <button onClick={handleBackToEditor} className="px-3 py-1 rounded transition-all flex items-center gap-2 bg-white text-indigo-700 shadow-sm"><Edit size={14} /> Editor</button>
+                    
+                    {/* BOTÓN DE EDITOR RÁPIDO (PLUMA) AHORA AQUÍ */}
+                    {user && viewMode !== 'input' && (
+                        <button 
+                            onClick={() => setShowEditor(!showEditor)} 
+                            className={`px-2 py-1 rounded transition-colors flex items-center justify-center ${showEditor ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-200 hover:text-white'}`} 
+                            title="Abrir Editor Rápido"
+                        >
+                            <PenTool size={14} />
+                        </button>
+                    )}
                 </div>
 
                 {user ? (
                     <div className="relative">
                         <div className="flex items-center bg-indigo-900/50 rounded-lg p-1 border border-indigo-600/50 cursor-pointer hover:border-indigo-400 transition-all" onClick={() => setShowUserMenu(!showUserMenu)}>
-                            <div className="px-3 flex flex-col items-start justify-center h-full"><span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider leading-tight">{isPremium ? 'PRO Plan' : 'Free Plan'}</span></div>
+                            <div className="px-3 flex flex-col items-start justify-center h-full"><span className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider leading-tight">{isPremium ? 'PRO PLAN' : 'FREE PLAN'}</span></div>
                             <button onClick={(e) => { e.stopPropagation(); if (!isPremium) setShowPaywallModal(true); }} className={`px-3 py-1.5 rounded-md text-xs font-bold shadow-sm transition-all flex items-center gap-1 ${isPremium ? 'bg-emerald-500 text-white cursor-default' : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:scale-105'}`}>{isPremium ? <><Crown size={12}/> Activo</> : 'Upgrade'}</button>
                         </div>
                         {showUserMenu && (
